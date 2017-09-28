@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <form id="chatform">
+      Name:<br>
+      <input type="text" name="username" value="User"><br>
+      Message:<br>
+      <input type="text" name="msg" value="Message"><br><br>
+      <input type="submit" value="Submit">
+    </form>
+    <div id="chatbox">
+    </div>
+ 
+    {% load static %}
+    <script src="{% static 'chatdemo/test.js' %}"></script>
+</body>
+</html>
