@@ -16,6 +16,7 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 from demofrontend.views import ChatDemo
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^chatdemo/', ChatDemo.as_view()),

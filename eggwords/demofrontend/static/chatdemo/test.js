@@ -1,4 +1,33 @@
-socket = new WebSocket("ws://" + window.location.host + "/chat/");
+
+let game_id = location.hash;
+if (game_id.length > 0) {
+	game_id = game_id.substr(1);
+	newgame = false;
+} else {
+	newgame = true;
+}
+
+const webSocketBridge = new channels.WebSocketBridge();
+webSocketBridge.connect('/ws/game/');
+
+webSocketBridge.socket.addEventListener('open', function() {
+    console.log("Connected to WebSocket");
+	if (newgame) {
+		console.log("Creating new game");
+		webSocketBridge.send({'type': 'create_game'})
+	} else {
+		console.log("Connecting to existing game");
+		webSocketBridge.send({'type': 'join_game', 'game_id': game_id})
+	}    
+});
+
+webSocketBridge.listen(function(action, stream) {
+  game_id = action.game_id;
+  console.log(action);
+  console.log(stream);
+  location.hash = game_id;
+  displayMessage(action.msg)
+});
 
 function displayMessage(msg) {
 	var newLine = document.createElement("p");
@@ -8,7 +37,9 @@ function displayMessage(msg) {
 }
 
 function sendMessage(username, msg) {
-	socket.send("[" + username + "] " + msg);
+	webSocketBridge.send({'game_id': game_id, 
+		'type': 'submit_word',
+		'word': msg})
 }
 
 document.querySelector("#chatform").addEventListener("submit", function(e) {
@@ -18,13 +49,7 @@ document.querySelector("#chatform").addEventListener("submit", function(e) {
    	sendMessage(username, msg);
 });
 
-socket.onmessage = function(e) {
-    displayMessage(e.data);
-}
 
-socket.onopen = function() {
-
-}
 
 
 
