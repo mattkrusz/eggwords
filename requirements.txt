@@ -1,3 +1,5 @@
 channels
 Django
 asgi_redis
+redis
+hiredis
