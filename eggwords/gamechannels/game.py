@@ -18,14 +18,42 @@ def json_fallback(obj):
     raise TypeError ("Type %s not serializable" % type(obj))
 
 class GameState:
+    
+    def __init__(self, id, player_ids, used_words, start_time, end_time):
+        self.id = id
+        self.player_ids = player_ids
+        self.used_words = used_words
+        self.start_time = start_time
+        self.end_time = end_time
+
+    def words_for(self, player_id):
+        player_id = str(player_id)
+        return [w for w,p_id in self.used_words.items() if player_id == p_id]
+    
+    def __str__(self):
+        return json.dumps({
+            'id': self.id,
+            'player_ids': list(self.player_ids),
+            'used_words': self.used_words,
+            'start_time': self.start_time,
+            'end_time': self.end_time            
+        }, default=json_fallback)
+
+
+class GameKeyIndex:
+    
     def __init__(self, id):
         self.id = id
-    
+        self._game_key = 'games::game-' + str(self.id)
+
     def game_key(self):
-        return 'games::game-' + str(self.id)
+        return self._game_key
 
     def game_start_key(self):
         return self.game_key() + ':start'
+
+    def game_end_key(self):
+        return self.game_key() + ':end'
 
     def game_players_key(self):
         return self.game_key() + ':players'
@@ -36,38 +64,51 @@ class GameState:
     def player_key(self, player_id):
         return self.game_key() + ':players:' + str(player_id)
 
-    def player_words_key(self, player_id):
-        return self.player_key(player_id) + ':words'
+    def used_words_set_key(self):
+        return self.game_key() + ':usedwords'
 
-    def players(self):
-        return r.smembers(self.game_players_key())
 
-    def player_words(self, player_id):
-        return r.smembers(self.player_words_key(player_id))
+def init_game(game_id, player_ids, words):
+    pipe = r.pipeline()
+    keys = GameKeyIndex(game_id)
+    pipe.sadd(keys.word_set_key(), *words)
+    pipe.set(keys.game_start_key(), datetime.utcnow().isoformat())
+    pipe.sadd(keys.game_players_key(), *(str(p) for p in player_ids))
+    pipe.execute()
+    return game_id
 
-    def player_add_word(self, player_id, word):
-        r.sadd(self.player_words_key(player_id), normalize_word(word))
+def get_game_state(game_id):
+    pipe = r.pipeline()
+    keys = GameKeyIndex(game_id)
+    pipe.smembers(keys.game_players_key())
+    pipe.hgetall(keys.used_words_set_key())
+    pipe.get(keys.game_start_key())
+    pipe.get(keys.game_end_key())
+    res = pipe.execute()
+    return GameState(
+        game_id,
+        res[0],
+        res[1],
+        res[2],
+        res[3]
+    )
 
-    def init_game(self, words, player_ids):     
-        pipe = r.pipeline()   
-        pipe.sadd(self.word_set_key(), *words)
-        pipe.set(self.game_start_key(), datetime.utcnow().isoformat())
-        pipe.sadd(self.game_players_key(), *(str(p) for p in player_ids))
-        pipe.execute()
-    
-    def get_words(self):
-        return r.get(self.word_set_key())
-    
-    def use_word(self, player_id, word):
-        success = r.srem(self.word_set_key(), word)
-        if success:
-            self.player_add_word(player_id, word)
-            return True
-        else:
-            return False
+def use_word(game_id, player_id, word):
+    keys = GameKeyIndex(game_id)
+    success = r.srem(keys.word_set_key(), word)    
+    if success:
+        r.hset(keys.used_words_set_key(), normalize_word(word), str(player_id))
+        return True
+    else:
+        return False    
 
-    def clean_up(self):
-        pipe = r.pipeline()
-        for k in r.scan_iter(match=self.game_key() + "*"):
-            pipe.delete(k)
-        pipe.execute()
+def end_game(game_id):
+    keys = GameKeyIndex(game_id)
+    r.setnx(keys.game_end_key(), datetime.utcnow().isoformat())
+
+def clean_up_game(game_id):
+    pipe = r.pipeline()
+    keys = GameKeyIndex(game_id)
+    for k in r.scan_iter(match=keys.game_key() + "*"):
+        pipe.delete(k)
+    pipe.execute()
