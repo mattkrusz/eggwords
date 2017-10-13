@@ -1,6 +1,8 @@
 import pytest
 import uuid
 import gamechannels.game as game_service
+from gamechannels.game import GameStatus
+import time
 
 test_words = ['spiders','diss','redips','eds','per','pes','speirs','sped','pride','psi','pied','rise',
     'reps','spires','prides','press','spired','pier','pies','resid','reis','die','ers','pries','pried',
@@ -24,13 +26,32 @@ def test_simple_game(game_id):
     p1_id = uuid.uuid4()
     p2_id = uuid.uuid4()
     
-    game_service.init_game(game_id, [p1_id, p2_id], test_words)
-    game_state = game_service.get_game_state(game_id)
+    game_service.init_game(game_id, [p1_id])
 
-    player_list = game_state.player_ids
-    assert 2 == len(player_list)
-    assert str(p1_id) in player_list
-    assert str(p2_id) in player_list
+    game_state = game_service.get_game_state(game_id)
+    assert GameStatus.WAITING == game_service.get_game_status(game_id)
+    assert 1 == len(game_state.player_ids)
+    assert str(p1_id) in game_state.player_ids
+
+    game_service.add_player(game_id, p2_id)
+
+    game_state = game_service.get_game_state(game_id)
+    assert GameStatus.WAITING == game_service.get_game_status(game_id)
+    assert 2 == len(game_state.player_ids)
+    assert str(p1_id) in game_state.player_ids
+    assert str(p2_id) in game_state.player_ids
+
+    result = game_service.use_word(game_id, p1_id, 'spiders')
+    assert result == False
+
+    did_start = game_service.start_game(game_id, test_words, countdown = 1)
+    assert did_start
+
+    game_state = game_service.get_game_state(game_id)
+    assert GameStatus.SCHEDULED == game_service.get_game_status(game_id)
+    
+    time.sleep(1)
+    assert GameStatus.PLAYING == game_service.get_game_status(game_id)
 
     result = game_service.use_word(game_id, p1_id, 'spiders')
     assert result == True
@@ -49,4 +70,4 @@ def test_simple_game(game_id):
 
     game_service.end_game(game_id)
     game_state = game_service.get_game_state(game_id)
-    assert game_state.end_time is not None
+    assert GameStatus.COMPLETED == game_service.get_game_status(game_id)
