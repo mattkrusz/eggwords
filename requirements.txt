@@ -3,3 +3,4 @@ Django
 asgi_redis
 redis
 hiredis
+python-dateutil
