@@ -49,6 +49,9 @@ def test_simple_game(game_id):
 
     game_state = game_service.get_game_state(game_id)
     assert GameStatus.SCHEDULED == game_service.get_game_status(game_id)
+    assert len('spiders') == len(game_state.letters)
+    for l in 'spiders':
+        assert l in game_state.letters
     
     time.sleep(1)
     assert GameStatus.PLAYING == game_service.get_game_status(game_id)

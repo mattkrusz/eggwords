@@ -1,24 +1,18 @@
 from django.http import HttpResponse
 from channels.handler import AsgiHandler
 from channels import Group, Channel
+from gamechannels.word_lists import word_lists
 import gamechannels.game as game_service
 from gamechannels.game import GameStatus
 import uuid
 import json
-
-test_words = ['spiders','diss','redips','eds','per','pes','speirs','sped','pride','psi','pied','rise',
-    'reps','spires','prides','press','spired','pier','pies','resid','reis','die','ers','pries','pried',
-    'dip','side','dis','sipe','dries','ser','peds','prises','spider','sips','sei','ides','ess','res',
-    'rep','spire','siped','redip','rei','psis','ped','sipes','ire','red','piss','pisser','spier',
-    'sris','dire','spied','rises','pissed','rids','sri','ids','reds','sire','sirs','resids',
-    'peri','speir','dips','drips','spiers','seis','sers','riped','ride','ripes','peris','piers',
-    'ripe','spies','pie','rip','rips','rid','pis','dress','sis','sir','sip','sired','priss',
-    'prise','prised','rides','sires','dies','ires','ired','sides','drip']
+import random
 
 def game_group_name(game_id):
     return 'game-' + str(game_id)
 
 def ws_connect(message):
+    print("ws_connect")
     message.reply_channel.send({"accept": True})
 
 def ws_receive(message):
@@ -36,16 +30,17 @@ def ws_newgame(message):
     game_service.init_game(game_id, [player_id])
     response = json.dumps({
         'type': 'NewGameResponse',
-        'game_id': str(game_id), 
-        'player_id': str(player_id)
+        'gameId': str(game_id), 
+        'playerId': str(player_id)
     })
     
     message.reply_channel.send({"accept": True, "text":response})
+    send_game_state(game_id)
 
 def ws_joingame(message):
-    game_id = message['game_id']
+    game_id = message['gameId']
     group_name = game_group_name(game_id)    
-    player_id = message.get("player_id")
+    player_id = message.get("playerId")
     if not player_id:
         player_id = uuid.uuid4()
     Group(group_name).add(message['reply_channel'])    
@@ -53,12 +48,11 @@ def ws_joingame(message):
     
     response = json.dumps({
         'type': 'JoinGameResponse',
-        'game_id': message['game_id'], 
-        'player_id': str(player_id)
+        'gameId': message['gameId'], 
+        'playerId': str(player_id)
     })
 
     message.reply_channel.send({"accept": True, "text":response})  
-
     send_game_state(game_id) 
 
 def send_game_state(game_id, game_state=None):
@@ -75,12 +69,13 @@ def send_game_state(game_id, game_state=None):
     Group(group_name).send({'text': json.dumps(game_state_resp)})    
 
 def ws_start_game(message):
-    game_id = message['game_id']
-    did_start = game_service.start_game(game_id, test_words, length = 90)    
+    game_id = message['gameId']
+    words = random.choice(word_lists)
+    did_start = game_service.start_game(game_id, words, length = 90)    
 
     delayed_message = {
         'channel': 'game.end',
-        'content': {'game_id': game_id},
+        'content': {'gameId': game_id},
         'delay': 91 * 1000
     }
     Channel('asgi.delay').send(delayed_message, immediately=True)    
@@ -88,30 +83,31 @@ def ws_start_game(message):
     send_game_state(game_id)
 
 def ws_end_game(message):
-    game_id = message['game_id']
+    game_id = message['gameId']
     group_name = game_group_name(game_id)
     if game_service.get_game_status(game_id) == GameStatus.COMPLETED:
         send_game_state(game_id)
     else:
         delayed_message = {
             'channel': 'game.end',
-            'content': {'game_id': game_id},
+            'content': {'gameId': game_id},
             'delay': 1 * 1000
         }
         Channel('asgi.delay').send(delayed_message, immediately=True)       
  
 
 def ws_submit_word(message):
-    game_id = message['game_id']
+    game_id = message['gameId']
     group_name = game_group_name(game_id)    
-    player_id = message['player_id']    
+    player_id = message['playerId']    
     word = message['word']
+    print("ws_submit_word", word)
     result = game_service.use_word(game_id, player_id, word)
 
     response = json.dumps({
         'type': 'SendWordResponse',
-        'game_id': game_id, 
-        'player_id': player_id,
+        'gameId': game_id, 
+        'playerId': player_id,
         'word': word,
         'result':  'ACCEPT' if result else 'REJECT'
     })

@@ -1,8 +1,10 @@
 import redis
 import json
 import uuid
+import random
 from datetime import datetime, timedelta
 import dateutil.parser
+from django.utils import timezone
 from enum import Enum
 
 class GameStatus(Enum):
@@ -26,24 +28,30 @@ def json_fallback(obj):
     raise TypeError ("Type %s not serializable" % type(obj))
 
 class GameState:    
-    def __init__(self, id, player_ids, used_words, start_time, end_time):
+    def __init__(self, id, player_ids, used_words, start_time, end_time, letters):
         self.id = id
         self.player_ids = player_ids
         self.used_words = used_words
         self.start_time = start_time
         self.end_time = end_time
+        self.letters = letters
 
     def words_for(self, player_id):
         player_id = str(player_id)
         return [w for w,p_id in self.used_words.items() if player_id == p_id]
+
+    def status_at_time(self, dtime=None):
+        return __derive_game_status__(self.start_time, self.end_time, dtime)
     
     def json_dict(self):
         return {
-            'id': self.id,
-            'player_ids': list(self.player_ids),
-            'used_words': self.used_words,
-            'start_time': self.start_time,
-            'end_time': self.end_time            
+            'gameId': str(self.id),
+            'playerIds': list(self.player_ids),
+            'usedWords': self.used_words,
+            'startTime': self.start_time,
+            'endTime': self.end_time,
+            'letters': self.letters,
+            'gameStatus': self.status_at_time().name,       
         }
     
     def __str__(self):
@@ -54,10 +62,13 @@ class GameKeyIndex:
     
     def __init__(self, id):
         self.id = id
-        self._game_key = 'games::game-' + str(self.id)
+        self._game_key = 'games::game-' + str(self.id)    
 
     def game_key(self):
         return self._game_key
+
+    def game_letters_key(self):
+        return self.game_key() + ':letters'
 
     def game_start_key(self):
         return self.game_key() + ':start'
@@ -95,11 +106,18 @@ def add_player(game_id, player_id):
 def start_game(game_id, words, countdown = 0, length = 90):    
     if get_game_status(game_id) not in [GameStatus.WAITING, GameStatus.SCHEDULED]:
         return False
+
+    # Create a scrambled version of the available letters
+    words.sort(key=lambda w: len(w), reverse=True)
+    letters = list(words[0])
+    random.shuffle(letters)
+    letters = "".join(letters)
     
     pipe = r.pipeline()
     keys = GameKeyIndex(game_id)
+    pipe.set(keys.game_letters_key(), letters)
     pipe.sadd(keys.word_set_key(), *words)
-    start_time = datetime.utcnow() + timedelta(seconds=countdown)
+    start_time = timezone.now() + timedelta(seconds=countdown)
     end_time = start_time + timedelta(seconds=length)
     pipe.set(keys.game_start_key(), start_time.isoformat())
     pipe.set(keys.game_end_key(), end_time.isoformat())
@@ -114,23 +132,27 @@ def get_game_state(game_id):
     pipe.hgetall(keys.used_words_set_key())
     pipe.get(keys.game_start_key())
     pipe.get(keys.game_end_key())
+    pipe.get(keys.game_letters_key())
     res = pipe.execute()
     return GameState(
         game_id,
         res[0],
         res[1],
         res[2],
-        res[3]
+        res[3],
+        res[4],
     )
 
-def __derive_game_status__(start: str, end: str):
+def __derive_game_status__(start: str, end: str, at_time=None):
+    if at_time is None:
+        at_time = timezone.now()
+
     if start and end:
             start_parsed = dateutil.parser.parse(start)     
             end_parsed = dateutil.parser.parse(end)
-            now = datetime.utcnow()
-            if now <= start_parsed:
+            if at_time <= start_parsed:
                 return GameStatus.SCHEDULED
-            elif now < end_parsed:
+            elif at_time < end_parsed:
                 return GameStatus.PLAYING
             else:
                 return GameStatus.COMPLETED
@@ -162,7 +184,7 @@ def use_word(game_id, player_id, word):
 
 def end_game(game_id):
     keys = GameKeyIndex(game_id)
-    r.set(keys.game_end_key(), datetime.utcnow().isoformat())    
+    r.set(keys.game_end_key(), timezone.now().isoformat())    
 
 def clean_up_game(game_id):
     pipe = r.pipeline()
