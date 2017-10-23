@@ -80,9 +80,3 @@ def test_simple_game(game_id):
     game_service.end_game(game_id)
     game_state = game_service.get_game_state(game_id)
     assert GameStatus.COMPLETED == game_service.get_game_status(game_id)
-
-def test_game_created(game_id):
-    p1_id = uuid.uuid4()
-    game_service.init_game(game_id, [p1_id])
-    game_state = game_service.get_game_state(game_id)
-     

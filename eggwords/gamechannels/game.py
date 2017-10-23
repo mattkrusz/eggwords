@@ -60,38 +60,60 @@ class GameState:
 
 
 class GameKeyIndex:
+
+    keys = {
+        'game_key': '{game_key}',
+        'game_letters_key': '{game_key}:letters',
+        'game_created_key': '{game_key}:created',
+        'game_start_key': '{game_key}:start',
+        'game_end_key': '{game_key}:end',
+        'game_players_key': '{game_key}:players',
+        'word_set_key': '{game_key}:words',
+        'player_key': '{game_key}:players',
+        'used_words_set_key': '{game_key}:usedwords',
+    }
     
     def __init__(self, id):
         self.id = id
-        self._game_key = 'games::game-' + str(self.id)    
+        self._game_key = 'games::game-' + str(self.id)
 
     def game_key(self):
         return self._game_key
 
+    def __with_game_key__(self, key_string):
+        return key_string.format(game_key = self._game_key)
+
+    def __key__(self, key_name):
+        return self.__with_game_key__(self.keys[key_name])
+
     def game_letters_key(self):
-        return self.game_key() + ':letters'
+        return self.__key__('game_letters_key')
 
     def game_created_key(self):
-        return self.game_key() + ':created'
+        return self.__key__('game_created_key')
 
     def game_start_key(self):
-        return self.game_key() + ':start'
+        return self.__key__('game_start_key')
 
     def game_end_key(self):
-        return self.game_key() + ':end'
+        return self.__key__('game_end_key')
 
     def game_players_key(self):
-        return self.game_key() + ':players'
+        return self.__key__('game_players_key')
 
     def word_set_key(self):
-        return self.game_key() + ':words'
+        return self.__key__('word_set_key')
 
     def player_key(self, player_id):
-        return self.game_key() + ':players:' + str(player_id)
+        return self.__key__('player_key')
 
     def used_words_set_key(self):
-        return self.game_key() + ':usedwords'
+        return self.__key__('used_words_set_key')
 
+    def __iter__(self):
+        for key_name in self.keys.keys():
+            yield self.__key__(key_name)
+            
 
 def init_game(game_id, player_ids):
     pipe = r.pipeline()
