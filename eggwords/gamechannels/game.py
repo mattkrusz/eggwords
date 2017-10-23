@@ -28,12 +28,13 @@ def json_fallback(obj):
     raise TypeError ("Type %s not serializable" % type(obj))
 
 class GameState:    
-    def __init__(self, id, player_ids, used_words, start_time, end_time, letters):
+    def __init__(self, id, player_ids, used_words, start_time, end_time, created_time, letters):
         self.id = id
         self.player_ids = player_ids
         self.used_words = used_words
         self.start_time = start_time
         self.end_time = end_time
+        self.created_time = created_time
         self.letters = letters
 
     def words_for(self, player_id):
@@ -70,6 +71,9 @@ class GameKeyIndex:
     def game_letters_key(self):
         return self.game_key() + ':letters'
 
+    def game_created_key(self):
+        return self.game_key() + ':created'
+
     def game_start_key(self):
         return self.game_key() + ':start'
 
@@ -93,6 +97,7 @@ def init_game(game_id, player_ids):
     pipe = r.pipeline()
     keys = GameKeyIndex(game_id)
     pipe.sadd(keys.game_players_key(), *(str(p) for p in player_ids))
+    pipe.set(keys.game_created_key(), timezone.now().utcnow())
     pipe.execute()
     return game_id
 
@@ -132,6 +137,7 @@ def get_game_state(game_id):
     pipe.hgetall(keys.used_words_set_key())
     pipe.get(keys.game_start_key())
     pipe.get(keys.game_end_key())
+    pipe.get(keys.game_created_key())
     pipe.get(keys.game_letters_key())
     res = pipe.execute()
     return GameState(
@@ -141,6 +147,7 @@ def get_game_state(game_id):
         res[2],
         res[3],
         res[4],
+        res[5],
     )
 
 def __derive_game_status__(start: str, end: str, at_time=None):
