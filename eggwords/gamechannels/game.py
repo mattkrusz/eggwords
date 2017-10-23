@@ -54,6 +54,9 @@ class GameState:
             'letters': self.letters,
             'gameStatus': self.status_at_time().name,       
         }
+
+    def exists(self):
+        return self.created_time is not None
     
     def __str__(self):
         return json.dumps(self.json_dict(), default=json_fallback)
@@ -151,6 +154,13 @@ def start_game(game_id, words, countdown = 0, length = 90):
     pipe.execute()
 
     return True
+
+def set_expiry(game_id, seconds):
+    keys = GameKeyIndex(game_id)
+    pipe = r.pipeline()
+    for key in keys:
+        pipe.expire(key, seconds)
+    pipe.execute()
 
 def get_game_state(game_id):
     pipe = r.pipeline()

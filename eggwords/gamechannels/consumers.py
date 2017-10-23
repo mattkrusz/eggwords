@@ -36,6 +36,13 @@ def ws_newgame(message):
     
     message.reply_channel.send({"accept": True, "text":response})
     send_game_state(game_id)
+    
+    expiry = {
+        'gameId': str(game_id), 
+        'expire_after_seconds': 600        
+    }
+    Channel('game.expire').send(expiry)
+    
 
 def ws_joingame(message):
     game_id = message['gameId']
@@ -71,16 +78,23 @@ def send_game_state(game_id, game_state=None):
 def ws_start_game(message):
     game_id = message['gameId']
     words = random.choice(word_lists)
-    did_start = game_service.start_game(game_id, words, length = 90)    
+    game_seconds = 90
+    did_start = game_service.start_game(game_id, words, length = game_seconds)    
 
     delayed_message = {
         'channel': 'game.end',
-        'content': {'gameId': game_id},
+        'content': {'gameId': str(game_id)},
         'delay': 91 * 1000
     }
     Channel('asgi.delay').send(delayed_message, immediately=True)    
 
     send_game_state(game_id)
+
+    expiry = {
+        'gameId': str(game_id), 
+        'expire_after_seconds': 120 + game_seconds     
+    }
+    Channel('game.expire').send(expiry)
 
 def ws_end_game(message):
     game_id = message['gameId']
@@ -115,7 +129,11 @@ def ws_submit_word(message):
 
     if result == True:         
         send_game_state(game_id)
- 
+
+def ws_expire_game(message):
+    game_id = message['gameId']
+    expire_after_seconds =  message.get('expire_after_seconds', 120)
+    game_service.set_expiry(game_id, expire_after_seconds)
 
 # Connected to websocket.disconnect
 def ws_disconnect(message):

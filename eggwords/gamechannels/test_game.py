@@ -80,3 +80,11 @@ def test_simple_game(game_id):
     game_service.end_game(game_id)
     game_state = game_service.get_game_state(game_id)
     assert GameStatus.COMPLETED == game_service.get_game_status(game_id)
+
+
+def test_expire(game_id):
+    game_service.set_expiry(game_id, 180)
+
+def test_get_missing_game():
+    game_state = game_service.get_game_state(uuid.uuid4())
+    assert not game_state.exists()
