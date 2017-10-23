@@ -8,6 +8,8 @@ import uuid
 import json
 import random
 
+DEFAULT_GAME_LENGTH = 90
+
 def game_group_name(game_id):
     return 'game-' + str(game_id)
 
@@ -78,23 +80,24 @@ def send_game_state(game_id, game_state=None):
 def ws_start_game(message):
     game_id = message['gameId']
     words = random.choice(word_lists)
-    game_seconds = 90
+    game_seconds = DEFAULT_GAME_LENGTH
     did_start = game_service.start_game(game_id, words, length = game_seconds)    
 
-    delayed_message = {
-        'channel': 'game.end',
-        'content': {'gameId': str(game_id)},
-        'delay': 91 * 1000
-    }
-    Channel('asgi.delay').send(delayed_message, immediately=True)    
+    if did_start:
+        delayed_message = {
+            'channel': 'game.end',
+            'content': {'gameId': str(game_id)},
+            'delay': (game_seconds+1) * 1000
+        }
+        Channel('asgi.delay').send(delayed_message, immediately=True)    
 
-    send_game_state(game_id)
+        send_game_state(game_id)
 
-    expiry = {
-        'gameId': str(game_id), 
-        'expire_after_seconds': 120 + game_seconds     
-    }
-    Channel('game.expire').send(expiry)
+        expiry = {
+            'gameId': str(game_id), 
+            'expire_after_seconds': 120 + game_seconds     
+        }
+        Channel('game.expire').send(expiry)
 
 def ws_end_game(message):
     game_id = message['gameId']
