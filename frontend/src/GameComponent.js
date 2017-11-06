@@ -63,11 +63,8 @@ const GameWordList = ({ wordCount, myWords, oppWords}) => {
   </div> );
   allWords.push(oppWordDom);
 
-  let lockedNumToShow = 0;
-  if (lockedNum > 0) {
-    let roomLeft = maxToShow - unlockedNum;
-    lockedNumToShow = roomLeft > 0 ? roomLeft : 1;
-  }
+  let roomLeft = Math.max(maxToShow - unlockedNum, 1);
+  let lockedNumToShow = Math.min(roomLeft, lockedNum);
   
   let lockedWordDom = new Array(lockedNumToShow);
   lockedWordDom.fill(<LockedWord len={wordLen}/>)

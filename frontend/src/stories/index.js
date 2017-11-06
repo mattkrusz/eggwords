@@ -9,11 +9,44 @@ import '../index.css'
 
 storiesOf('Game', module)
   .add('Basic', () => <Game 
-    myWords={['SPIDER', 'DIRE', 'RED', 'SPED', 'PIE', 'SIPS', 'SPIES', 'PIES']}
-    oppWords={['RIDE', 'RIDES', 'PIES', 'SPIDERS', 'SIDE', 'SIPE', 'PEDS']}
-    wordCount={[0,0,0,26,32,27,12,1]}
-    letters={'DISPSER'}
-    typed={'RIDES'}
+    myWords={['aced',
+      'aide',
+      'chined',
+      'hin',
+      'cnida',
+      'haen',
+      'din',
+      'ache',
+      'china',
+      'ace',
+      'chide',
+      'die',
+      'haed',
+      'iced',
+      'ahed',
+      'chained']}
+    oppWords={['caid',
+      'caned',
+      'ached',
+      'hind',
+      'inch',
+      'hen',
+      'hance',
+      'nice',
+      'head',
+      'chai',
+      'nide',
+      'niche',
+      'dan',
+      'niched',
+      'dah',
+      'hied',
+      'canid',
+      'hand',
+      'chine',]}
+    wordCount={[0,0,0,28,37,13,5,3]}
+    letters={'chained'}
+    typed={'chide'}
     timeRemaining={85}
     myPlayerId={'70b0e89e-760b-4576-912b-590c03c174d0'}
     players={[{
