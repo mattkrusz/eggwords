@@ -49,13 +49,32 @@ gc.onJoinGame().subscribe((e) => {
 });
 
 const mapStateToProps = state => {
+    let myPlayerId = playerId;
+    let oppWords = Object.entries(state.game.usedWords)
+        .filter(([word, playerId]) => playerId !== myPlayerId)
+        .map(([word, playerId]) => word);
+
+    let inputRPadding = state.game.letters ? state.game.letters.length : 7;
+    let typed = state.player.typed.padEnd(inputRPadding, ' ');
+
+    let players = state.game.playerIds.map((pId) => (
+        {
+            playerId: pId,
+            score: state.game.score[pId],
+            name: null
+        }
+    ));
+
     return {
-      letters: state.game.localLetters,
-      typed: state.player.typed,
+      letters: state.game.localLetters || '',
+      typed: typed,
       myWords: state.requests.acceptedWords.map((aw) => aw.word),
-      usedWords: Object.keys(state.game.usedWords),
+      oppWords: oppWords,
+      wordCount: state.game.wordCount || [],      
       timeRemaining: state.game.timeRemaining,
-      players: state.game.playerIds,
+      myPlayerId: playerId,
+      players: players,
+      maxScore: 10000,
       gameStatus: state.game.gameStatus
     }
   }
