@@ -103,13 +103,13 @@ div {
 }
 
 .locked .letter {
-  background-image: url("/skull.svg");
+  background-image: url("/static/skull.svg");
   background-size: contain;
   background-repeat: no-repeat;
 }
 
 .locked.used .letter {
-  background-image: url("/skull-used.svg");
+  background-image: url("/static/skull-used.svg");
   background-size: contain;
   background-repeat: no-repeat;
 }
