@@ -1,8 +1,9 @@
 import redis
 import json
 import uuid
-import random
+import random, collections
 from datetime import datetime, timedelta
+from gamechannels.score import score_game
 import dateutil.parser
 from django.utils import timezone
 from enum import Enum
@@ -28,7 +29,8 @@ def json_fallback(obj):
     raise TypeError ("Type %s not serializable" % type(obj))
 
 class GameState:    
-    def __init__(self, id, player_ids, used_words, start_time, end_time, created_time, letters):
+    def __init__(self, id, player_ids, used_words, start_time, end_time, created_time, 
+        letters, word_count):
         self.id = id
         self.player_ids = player_ids
         self.used_words = used_words
@@ -36,6 +38,7 @@ class GameState:
         self.end_time = end_time
         self.created_time = created_time
         self.letters = letters
+        self.word_count = word_count
 
     def words_for(self, player_id):
         player_id = str(player_id)
@@ -44,15 +47,20 @@ class GameState:
     def status_at_time(self, dtime=None):
         return __derive_game_status__(self.start_time, self.end_time, dtime)
     
+    def score(self):
+        return score_game(self)
+
     def json_dict(self):
         return {
             'gameId': str(self.id),
             'playerIds': list(self.player_ids),
             'usedWords': self.used_words,
+            'wordCount': self.word_count,
             'startTime': self.start_time,
             'endTime': self.end_time,
             'letters': self.letters,
-            'gameStatus': self.status_at_time().name,       
+            'gameStatus': self.status_at_time().name,
+            'score': self.score()
         }
 
     def exists(self):
@@ -71,6 +79,7 @@ class GameKeyIndex:
         'game_start_key': '{game_key}:start',
         'game_end_key': '{game_key}:end',
         'game_players_key': '{game_key}:players',
+        'game_word_count_key': '{game_key}:wordcount',
         'word_set_key': '{game_key}:words',
         'player_key': '{game_key}:players',
         'used_words_set_key': '{game_key}:usedwords',
@@ -91,6 +100,9 @@ class GameKeyIndex:
 
     def game_letters_key(self):
         return self.__key__('game_letters_key')
+
+    def game_wc_key(self):
+        return self.__key__('game_word_count_key')
 
     def game_created_key(self):
         return self.__key__('game_created_key')
@@ -142,6 +154,12 @@ def start_game(game_id, words, countdown = 0, length = 90):
     letters = list(words[0])
     random.shuffle(letters)
     letters = "".join(letters)
+    letter_count = len(letters)
+
+    word_count_dic = collections.Counter((len(w) for w in words))
+    word_count_arr = [0] * (letter_count + 1)
+    for (w_length, w_count) in word_count_dic.items():
+        word_count_arr[w_length] = w_count
     
     pipe = r.pipeline()
     keys = GameKeyIndex(game_id)
@@ -151,6 +169,7 @@ def start_game(game_id, words, countdown = 0, length = 90):
     end_time = start_time + timedelta(seconds=length)
     pipe.set(keys.game_start_key(), start_time.isoformat())
     pipe.set(keys.game_end_key(), end_time.isoformat())
+    pipe.rpush(keys.game_wc_key(), *word_count_arr)
     pipe.execute()
 
     return True
@@ -171,6 +190,7 @@ def get_game_state(game_id):
     pipe.get(keys.game_end_key())
     pipe.get(keys.game_created_key())
     pipe.get(keys.game_letters_key())
+    pipe.lrange(keys.game_wc_key(), 0, -1)
     res = pipe.execute()
     return GameState(
         game_id,
@@ -180,6 +200,7 @@ def get_game_state(game_id):
         res[3],
         res[4],
         res[5],
+        res[6]
     )
 
 def __derive_game_status__(start: str, end: str, at_time=None):

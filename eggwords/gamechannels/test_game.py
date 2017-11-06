@@ -1,9 +1,12 @@
 import pytest
 import uuid
 import gamechannels.game as game_service
+import gamechannels.score as score_service
 import dateutil.parser
-from datetime import datetime
-from gamechannels.game import GameStatus
+from datetime import datetime, timedelta
+from django.utils import timezone
+from gamechannels.game import GameStatus, GameState
+from collections import Counter
 import time, os
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "eggwords.settings")
@@ -16,6 +19,11 @@ test_words = ['spiders','diss','redips','eds','per','pes','speirs','sped','pride
     'peri','speir','dips','drips','spiers','seis','sers','riped','ride','ripes','peris','piers',
     'ripe','spies','pie','rip','rips','rid','pis','dress','sis','sir','sip','sired','priss',
     'prise','prised','rides','sires','dies','ires','ired','sides','drip']
+
+test_word_counter = Counter((len(w) for w in test_words))
+test_word_count = [0] * (max((len(w) for w in test_words)) + 1)
+for (w_len, w_count) in test_word_counter.items():
+    test_word_count[w_len] = w_count
 
 @pytest.fixture(autouse=True, scope='function')
 def game_id():
@@ -81,6 +89,53 @@ def test_simple_game(game_id):
     game_state = game_service.get_game_state(game_id)
     assert GameStatus.COMPLETED == game_service.get_game_status(game_id)
 
+def test_score():
+    p1_id = uuid.uuid4()
+    p2_id = uuid.uuid4()
+
+    game_state0 = GameState(
+        uuid.uuid4(),
+        [p1_id, p2_id],
+        { },
+        (timezone.now() - timedelta(seconds=45)).isoformat(),
+        (timezone.now() + timedelta(seconds=45)).isoformat(),
+        (timezone.now() - timedelta(seconds=70)).isoformat(),
+        'spiders',
+        test_word_count
+    )
+
+    score0 = score_service.score_game(game_state0)
+    assert score0[p1_id] == score0[p2_id] == 0
+
+    game_state1 = GameState(
+        uuid.uuid4(), 
+        [p1_id, p2_id],     
+        {  'spiders': p1_id,
+           'diss': p1_id,
+           'redips': p1_id,
+           'eds': p1_id,
+           'per': p1_id,
+           'pes': p1_id,
+           'speirs': p1_id,
+           'sped': p1_id,
+           'pride': p1_id,
+           'psi': p2_id ,
+           'pied': p2_id ,
+           'rise': p2_id ,            
+           'reps': p2_id ,
+           'spires': p2_id ,
+           'prides': p2_id ,
+           'press': p2_id 
+        },
+        (timezone.now() - timedelta(seconds=45)).isoformat(),
+        (timezone.now() + timedelta(seconds=45)).isoformat(),
+        (timezone.now() - timedelta(seconds=70)).isoformat(),
+        'spiders',
+        test_word_count
+    )
+    
+    score1 = score_service.score_game(game_state1)
+    assert score1[p1_id] > score1[p2_id]
 
 def test_expire(game_id):
     game_service.set_expiry(game_id, 180)
