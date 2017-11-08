@@ -43,17 +43,8 @@ function game (
         });
         break;
       case ActionTypes.UPDATE_GAME_STATE:
-        let newState = Object.assign({}, state, action.gameState);
-        if (state.localLetters == null) {
-            newState.localLetters = newState.letters;
-        }
-        return newState;
-        break;
-      case ActionTypes.SHUFFLE_LETTERS:
-        let shuffled = shuffleString(state.letters);
-        return Object.assign({}, state, {
-            localLetters: shuffled
-        });    
+        return Object.assign({}, state, action.gameState);
+        break;  
       default:
         return state;
     }
@@ -74,21 +65,49 @@ function player (
         });
         break;
       case ActionTypes.ENTER_LETTER:
+        let ls = state.localLetters;
+        let x = ls.indexOf(action.letter);
         return Object.assign({}, state, {
-            typed: state.typed + action.letter
+            typed: state.typed + action.letter,
+            localLetters: ls.slice(0, x) + ls.slice(x + 1)
         });
         break;
+      case ActionTypes.UPDATE_GAME_STATE:
+        if (state.localLetters == null 
+                && action.gameState.letters != null) {
+            let newState = Object.assign({}, state);
+            if (state.localLetters == null) {
+                newState.localLetters = action.gameState.letters;
+            }
+            return newState;
+        } else {
+            return state;
+        }
+        break;        
       case ActionTypes.BACKSPACE:
-        let s = state.typed;
-        return Object.assign({}, state, {
-            typed: s.slice(0, s.length > 0 ? s.length - 1 : 0)
-        });
+        let t = state.typed;        
+        if (t != null && t.length > 0) {
+            let last = t[t.length - 1];
+            let ls = state.localLetters;
+            return Object.assign({}, state, {
+                typed: t.slice(0, t.length > 0 ? t.length - 1 : 0),
+                localLetters: ls + last
+            });
+        } else {
+            return state;
+        }    
         break;   
       case ActionTypes.CLEAR_TYPED:
         return Object.assign({}, state, {
-            typed: ''
+            typed: '',
+            localLetters: state.localLetters + state.typed
         });
-        break;                       
+        break;   
+      case ActionTypes.SHUFFLE_LETTERS:
+        let shuffled = shuffleString(state.localLetters);
+        return Object.assign({}, state, {
+            localLetters: shuffled
+        });                              
       default:
         return state;
     }

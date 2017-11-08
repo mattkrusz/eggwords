@@ -26,7 +26,7 @@ class GameClient {
         
         let connectPromise = new Promise((resolve, reject) => {
             console.log("Starting connection");
-            this.wsBridge.connect('/ws/game/', undefined, options);
+            this.wsBridge.connect('ws://localhost:8000/ws/game/', undefined, options);
             this.wsBridge.listen(this.listen.bind(this));
             this.wsBridge.socket.addEventListener('open', 
                 () => {

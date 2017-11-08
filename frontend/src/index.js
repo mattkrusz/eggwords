@@ -69,7 +69,7 @@ const mapStateToProps = state => {
     ));
 
     return {
-      letters: state.game.localLetters || '',
+      letters: state.player.localLetters || '',
       typed: typed,
       myWords: state.requests.acceptedWords.map((aw) => aw.word),
       oppWords: oppWords,

@@ -79,27 +79,12 @@ export class ActionFactory {
 
     typeLetter(letter) {
         return (dispatch, getState) => {
-            const { game, player } = getState();
-            let counter = {};
-            game.letters.split('').reduce((total, nxt) => {
-                total[nxt] ? total[nxt]++ : total[nxt] = 1;
-                return total;
-            }, counter);
-
-            let typed = player.typed + letter;   
-
-            typed.split('').reduce((total, nxt) => {
-                total[nxt] ? total[nxt]-- : total[nxt] = -1;
-                return total;
-            }, counter);
-
-            let legal = Object.values(counter).every((x) => x >= 0);
-
-            if (legal) {
+            const { player } = getState();
+            if (player.localLetters.includes(letter)) {
                 dispatch(this.enterLetter(letter));
             } else {
                 dispatch(this.rejectLetter(letter));
-            }   
+            }
         }        
     }
 
