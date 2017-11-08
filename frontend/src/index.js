@@ -104,7 +104,7 @@ ReactDOM.render(
 registerServiceWorker();
 
 document.addEventListener("keydown", (e) => {
-    console.log(e);
+    e.preventDefault();
     let c = e.keyCode;
     if (c >= 65 && c <= 90 ) {
         store.dispatch(actionFactory.typeLetter(e.key));
