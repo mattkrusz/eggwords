@@ -14,6 +14,8 @@ import { createLogger } from 'redux-logger';
 import GameClient from './Client';
 import EventAdapter from './Client/adapter';
 
+let storage = window.localStorage;
+
 const loggerMiddleware = createLogger({
     predicate: (getState, action) => {
         return action.type != 'TICK';
@@ -31,20 +33,21 @@ const gc = new GameClient();
 const actionFactory = new Actions.ActionFactory(gc);
 const adapter = new EventAdapter(gc, store);
 let gameId = null;
-let playerId = null;
+let playerId = storage.getItem("playerId");;
 
 gc.connect().then(() => {
     if (window.location.hash == '') {
         store.dispatch(actionFactory.playerCreatesGame());
     } else {
         gameId = window.location.hash.slice(1);
-        store.dispatch(actionFactory.playerJoinsGame(null, gameId));
+        store.dispatch(actionFactory.playerJoinsGame(playerId, gameId));
     }    
 });
 
 gc.onJoinGame().subscribe((e) => {
     gameId = e.action.gameId;
     playerId = e.action.playerId;
+    storage.setItem("playerId", playerId)
     window.history.pushState(null, null, '#' + gameId);
 });
 
