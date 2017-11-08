@@ -19,7 +19,7 @@ div {
 }
 
 .eggwords {
-  display: flex;
+  margin: 1em;  
   height: 100vh;
 }
 

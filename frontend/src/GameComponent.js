@@ -94,12 +94,20 @@ let trim = (s, len = 15) => {
 
 }
 
-const GameTimer = ({secondsRemaining}) => {
-  let timeToShow = typeof secondsRemaining == 'number' && !isNaN(secondsRemaining) ? secondsRemaining : "";
-  timeToShow = timeToShow > 0 ? timeToShow : 0;
-  return <div class="timer-container">
-    <span class="countdown-time">{timeToShow}</span>
-  </div>
+const GameTimer = ({secondsRemaining, gameStatus}) => {
+  if (gameStatus === "WAITING") {
+    return <div class="timer-container">
+      <span class="countdown-time">{"Waiting to start ..."}</span>
+    </div>    
+  } else {
+    let timeToShow = "";
+    if (typeof secondsRemaining == 'number' && !isNaN(secondsRemaining)) {
+      timeToShow = secondsRemaining > 0 ? secondsRemaining : 0;
+    }
+    return <div class="timer-container">
+      <span class="countdown-time">{timeToShow}</span>
+    </div>
+  }
 }
 
 
@@ -116,9 +124,9 @@ const GameScoreList = ({playerList, myPlayerId, maxScore}) => {
   return <div className="score-list">{scoreList}</div>
 }
 
-const GameTopArea = ({ secondsRemaining, playerList, myPlayerId, maxScore}) => {
+const GameTopArea = ({ secondsRemaining, playerList, myPlayerId, maxScore, gameStatus}) => {
   return <div class="game-top"> 
-    <GameTimer secondsRemaining={secondsRemaining} />
+    <GameTimer secondsRemaining={secondsRemaining} gameStatus={gameStatus}/>
     <GameScoreList playerList={playerList} myPlayerId={myPlayerId} maxScore={maxScore} />
   </div>
 }
@@ -132,12 +140,28 @@ const Game = ({letters, typed, myWords, oppWords, wordCount,
   })
 
   return (
-    <div>      
-      <GameTopArea secondsRemaining={timeRemaining} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore}/>
+    <div className="eggwords">      
+      <GameTopArea secondsRemaining={timeRemaining} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus}/>
       <GameInputArea letters={letters} typed={typed} gameStatus={gameStatus} onStartClick={onStartClick}/>
       <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} />
     </div>
   )
 }
+
+Game.propTypes = {
+};
+Game.defaultProps = {
+  letters: '',
+  typed: '',
+  myWords: [],
+  oppWords: [],
+  wordCount: [],
+  timeRemaining: null,
+  players: [],
+  myPlayerId: null,
+  gameStatus: 'WAITING',
+  onStartClick: () => {},
+  maxScore: -1
+};
 
 export default Game;
