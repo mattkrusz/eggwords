@@ -72,8 +72,8 @@ const GameWordList = ({ wordCount, myWords, oppWords}) => {
 
  });
 
-  return <div class="game-bottom">
-    <div class="game-words">
+  return <div className="game-bottom">
+    <div className="game-words">
       {allWords}
     </div>
   </div>
@@ -96,16 +96,16 @@ let trim = (s, len = 15) => {
 
 const GameTimer = ({secondsRemaining, gameStatus}) => {
   if (gameStatus === "WAITING") {
-    return <div class="timer-container">
-      <span class="countdown-time">{"Waiting to start ..."}</span>
+    return <div className="timer-container">
+      <span className="countdown-time">{"Waiting to start ..."}</span>
     </div>    
   } else {
     let timeToShow = "";
     if (typeof secondsRemaining == 'number' && !isNaN(secondsRemaining)) {
       timeToShow = secondsRemaining > 0 ? secondsRemaining : 0;
     }
-    return <div class="timer-container">
-      <span class="countdown-time">{timeToShow}</span>
+    return <div className="timer-container">
+      <span className="countdown-time">{timeToShow}</span>
     </div>
   }
 }
@@ -125,7 +125,7 @@ const GameScoreList = ({playerList, myPlayerId, maxScore}) => {
 }
 
 const GameTopArea = ({ secondsRemaining, playerList, myPlayerId, maxScore, gameStatus}) => {
-  return <div class="game-top"> 
+  return <div className="game-top"> 
     <GameTimer secondsRemaining={secondsRemaining} gameStatus={gameStatus}/>
     <GameScoreList playerList={playerList} myPlayerId={myPlayerId} maxScore={maxScore} />
   </div>
