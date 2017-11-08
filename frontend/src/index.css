@@ -106,6 +106,7 @@ div {
   background-image: url("/static/skull.svg");
   background-size: contain;
   background-repeat: no-repeat;
+  color: #4101ff;
 }
 
 .locked.used .letter {

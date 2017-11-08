@@ -59,7 +59,7 @@ const GameWordList = ({ wordCount, myWords, oppWords, revealedWords, gameStatus 
   allWords.push(myWordDom);
 
   let oppWordDom = u.map((w) => <div className= "game-word locked used">
-    { w.split('').map((l) => <div className="letter"> </div>) }
+    { w.split('').map((l) => <div className="letter">{l}</div>) }
   </div> );
   allWords.push(oppWordDom);
 
