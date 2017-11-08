@@ -181,6 +181,11 @@ def set_expiry(game_id, seconds):
         pipe.expire(key, seconds)
     pipe.execute()
 
+def get_game_words(game_id):
+    keys = GameKeyIndex(game_id)
+    words = r.smembers(keys.word_set_key())
+    return words
+
 def get_game_state(game_id):
     pipe = r.pipeline()
     keys = GameKeyIndex(game_id)

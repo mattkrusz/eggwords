@@ -61,6 +61,11 @@ def test_simple_game(game_id):
     did_start = game_service.start_game(game_id, test_words, countdown = 1)
     assert did_start
 
+    words = game_service.get_game_words(game_id)
+    assert words is not None
+    for t in test_words:
+        assert t in words
+
     game_state = game_service.get_game_state(game_id)
     assert GameStatus.SCHEDULED == game_service.get_game_status(game_id)
     assert len('spiders') == len(game_state.letters)

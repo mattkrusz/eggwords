@@ -37,6 +37,13 @@ export default class EventAdapter {
                 e.action.playerId, e.action.word, e.action.result);
             this.store.dispatch(wordResponseAction);
         });
+        
+        this.gameStream
+            .filter((e) => e.action.type === 'RevealWords')
+            .subscribe((e) => {
+                let revealWordsAction = this.actionFactory.revealWords(e.action.gameId, e.action.words);
+                this.store.dispatch(revealWordsAction);
+        });
     }
 
 }

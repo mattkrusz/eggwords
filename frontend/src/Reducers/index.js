@@ -22,7 +22,8 @@ function game (
 		startTime: null,
         endTime: null,
         timeRemaining: null,
-		playerIds: [],
+        playerIds: [],
+        revealedWords: null
 	},
     action
   ) {
@@ -44,7 +45,12 @@ function game (
         break;
       case ActionTypes.UPDATE_GAME_STATE:
         return Object.assign({}, state, action.gameState);
-        break;  
+        break;
+      case ActionTypes.REVEAL_WORDS:
+        return Object.assign({}, state, {
+            revealedWords: action.words
+        });
+        break;
       default:
         return state;
     }

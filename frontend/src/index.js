@@ -78,7 +78,8 @@ const mapStateToProps = state => {
       myPlayerId: playerId,
       players: players,
       maxScore: 10000,
-      gameStatus: state.game.gameStatus
+      gameStatus: state.game.gameStatus,
+      revealedWords: state.game.revealedWords
     }
   }
   

@@ -40,7 +40,7 @@ const LockedWord = ({len}) => {
   </div>
 }
 
-const GameWordList = ({ wordCount, myWords, oppWords}) => {
+const GameWordList = ({ wordCount, myWords, oppWords, revealedWords, gameStatus }) => {
 
  let allWords = [];
 
@@ -64,11 +64,22 @@ const GameWordList = ({ wordCount, myWords, oppWords}) => {
   allWords.push(oppWordDom);
 
   let roomLeft = Math.max(maxToShow - unlockedNum, 1);
-  let lockedNumToShow = Math.min(roomLeft, lockedNum);
-  
-  let lockedWordDom = new Array(lockedNumToShow);
-  lockedWordDom.fill(<LockedWord len={wordLen}/>)
-  allWords.push(lockedWordDom);
+
+  if (gameStatus === "PLAYING") {
+    let lockedNumToShow = Math.min(roomLeft, lockedNum);
+    let lockedWordDom = new Array(lockedNumToShow);
+    lockedWordDom.fill(<LockedWord len={wordLen} />)
+    allWords.push(lockedWordDom);
+  } else if (gameStatus === "COMPLETED" && revealedWords != null) {
+    let revealedNumToShow = Math.min(roomLeft, lockedNum);
+    let revealedWordDom = revealedWords
+      .filter((w) => w.length == wordLen && !u.includes(w) && !m.includes(w))
+      .slice(0, revealedNumToShow)
+      .map((w) => <div className="game-word"> 
+        { w.split('').map((l) => <div className="letter">{l}</div>) }
+      </div>)
+    allWords.push(revealedWordDom);
+  }
 
  });
 
@@ -133,7 +144,7 @@ const GameTopArea = ({ secondsRemaining, playerList, myPlayerId, maxScore, gameS
 
 const Game = ({letters, typed, myWords, oppWords, wordCount,
   timeRemaining, players, myPlayerId, gameStatus, onStartClick,
-  maxScore}) => {
+  maxScore, revealedWords}) => {
   
   let myList = myWords.map((w) => {
     return <li key={w}>{w}</li>
@@ -143,7 +154,7 @@ const Game = ({letters, typed, myWords, oppWords, wordCount,
     <div className="eggwords">      
       <GameTopArea secondsRemaining={timeRemaining} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus}/>
       <GameInputArea letters={letters} typed={typed} gameStatus={gameStatus} onStartClick={onStartClick}/>
-      <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} />
+      <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} revealedWords={revealedWords} gameStatus={gameStatus}/>
     </div>
   )
 }
@@ -161,6 +172,7 @@ Game.defaultProps = {
   myPlayerId: null,
   gameStatus: 'WAITING',
   onStartClick: () => {},
+  revealedWords: [],
   maxScore: -1
 };
 

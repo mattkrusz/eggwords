@@ -8,7 +8,7 @@ import uuid
 import json
 import random
 
-DEFAULT_GAME_LENGTH = 90
+DEFAULT_GAME_LENGTH = 60
 
 def game_group_name(game_id):
     return 'game-' + str(game_id)
@@ -104,6 +104,7 @@ def ws_end_game(message):
     group_name = game_group_name(game_id)
     if game_service.get_game_status(game_id) == GameStatus.COMPLETED:
         send_game_state(game_id)
+        reveal_words(game_id)
     else:
         delayed_message = {
             'channel': 'game.end',
@@ -137,6 +138,17 @@ def ws_expire_game(message):
     game_id = message['gameId']
     expire_after_seconds =  message.get('expire_after_seconds', 120)
     game_service.set_expiry(game_id, expire_after_seconds)
+
+def reveal_words(game_id):
+    group_name = game_group_name(game_id)
+    game_words = game_service.get_game_words(game_id)
+    response = json.dumps({
+        'type': 'RevealWords',
+        'gameId': game_id,
+        'words': list(game_words)
+    })
+    Group(group_name).send({'text': response})
+
 
 # Connected to websocket.disconnect
 def ws_disconnect(message):

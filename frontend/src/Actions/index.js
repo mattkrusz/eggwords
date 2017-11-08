@@ -18,6 +18,7 @@ export const REJECT_LETTER = 'REJECT_LETTER';
 export const BACKSPACE = 'BACKSPACE';
 export const CLEAR_TYPED = 'CLEAR_TYPED';
 export const SHUFFLE_LETTERS = 'SHUFFLE_LETTERS';
+export const REVEAL_WORDS = 'REVEAL_WORDS';
 export const TICK = 'TICK';
 
 // Probably also need: SHUFFLE
@@ -165,6 +166,15 @@ export class ActionFactory {
                 playerId: playerId,
                 receivedAt: Date.now()
             });
+        }
+    }
+
+    revealWords(gameId, words) {
+        return {
+            type: REVEAL_WORDS,
+            gameId: gameId,
+            words: words,
+            receivedAt: Date.now()
         }
     }
 
