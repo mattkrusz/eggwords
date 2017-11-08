@@ -12,8 +12,8 @@ storiesOf('Game', module)
     myWords={['aced', 'aide', 'chined', 'hin', 'cnida', 'haen', 'din', 'ache', 'china', 'ace', 'chide', 'die', 'haed', 'iced', 'ahed', 'chained']}
     oppWords={['caid', 'caned', 'ached', 'hind', 'inch', 'hen', 'hance', 'nice', 'head', 'chai', 'nide', 'niche', 'dan', 'niched', 'dah', 'hied', 'canid', 'hand', 'chine']}
     wordCount={[0,0,0,28,37,13,5,3]}
-    letters={'ndcehai'}
-    typed={'chide'}
+    letters={'enca'}
+    typed={'hid'}
     timeRemaining={85}
     myPlayerId={'70b0e89e-760b-4576-912b-590c03c174d0'}
     players={[{
