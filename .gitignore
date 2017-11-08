@@ -104,3 +104,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+eggwords/static/
+frontend/*.lock
+frontend/package-lock.json
+frontend/.storybook/
+
+/.vscode/
