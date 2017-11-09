@@ -59,7 +59,8 @@ function game (
 function player (
     state = {
         playerId: null,
-        typed: ''
+        typed: '',
+        localLetters: null
 	},
     action
   ) {
@@ -82,9 +83,7 @@ function player (
         if (state.localLetters == null 
                 && action.gameState.letters != null) {
             let newState = Object.assign({}, state);
-            if (state.localLetters == null) {
-                newState.localLetters = action.gameState.letters;
-            }
+            newState.localLetters = action.gameState.letters;            
             return newState;
         } else {
             return state;
@@ -94,7 +93,7 @@ function player (
       case ActionTypes.CLEAR_TYPED:
         return Object.assign({}, state, {
             typed: '',
-            localLetters: state.localLetters + state.typed
+            localLetters: state.typed + state.localLetters
         });
         break;   
       case ActionTypes.SHUFFLE_LETTERS:
