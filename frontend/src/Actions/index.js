@@ -106,13 +106,19 @@ export class ActionFactory {
     }
 
     wordResponse(gameId, playerId, word, result) {
-        return {
-            type: WORD_RESPONSE,
-            gameId: gameId,
-            playerId: playerId,
-            word: word,
-            result: result,
-            receivedAt: Date.now()
+
+        return (dispatch) => {
+            dispatch({
+                type: WORD_RESPONSE,
+                gameId: gameId,
+                playerId: playerId,
+                word: word,
+                result: result,
+                receivedAt: Date.now()
+            });
+            if (result) {
+                dispatch(this.clearTyped());
+            }
         }
     }    
     
