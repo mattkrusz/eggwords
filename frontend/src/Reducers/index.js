@@ -90,19 +90,7 @@ function player (
             return state;
         }
         break;        
-      case ActionTypes.BACKSPACE:
-        let t = state.typed;        
-        if (t != null && t.length > 0) {
-            let last = t[t.length - 1];
-            let ls = state.localLetters;
-            return Object.assign({}, state, {
-                typed: t.slice(0, t.length > 0 ? t.length - 1 : 0),
-                localLetters: ls + last
-            });
-        } else {
-            return state;
-        }    
-        break;   
+      case ActionTypes.BACKSPACE: 
       case ActionTypes.CLEAR_TYPED:
         return Object.assign({}, state, {
             typed: '',
