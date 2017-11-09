@@ -116,7 +116,7 @@ export class ActionFactory {
                 result: result,
                 receivedAt: Date.now()
             });
-            if (result) {
+            if (result === 'ACCEPT') {
                 dispatch(this.clearTyped());
             }
         }
