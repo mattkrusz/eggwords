@@ -8,7 +8,7 @@ import uuid
 import json
 import random
 
-DEFAULT_GAME_LENGTH = 60
+DEFAULT_GAME_LENGTH = 120
 
 def game_group_name(game_id):
     return 'game-' + str(game_id)
