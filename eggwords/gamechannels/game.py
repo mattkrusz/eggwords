@@ -149,14 +149,16 @@ def start_game(game_id, words, countdown = 0, length = 90):
     if get_game_status(game_id) not in [GameStatus.WAITING, GameStatus.SCHEDULED]:
         return False
 
+    word_set = set(words)
+
     # Create a scrambled version of the available letters
     words.sort(key=lambda w: len(w), reverse=True)
     letters = list(words[0])
     random.shuffle(letters)
     letters = "".join(letters)
-    letter_count = len(letters)
+    letter_count = len(letters)        
 
-    word_count_dic = collections.Counter((len(w) for w in words))
+    word_count_dic = collections.Counter((len(w) for w in word_set))
     word_count_arr = [0] * (letter_count + 1)
     for (w_length, w_count) in word_count_dic.items():
         word_count_arr[w_length] = w_count
@@ -164,7 +166,7 @@ def start_game(game_id, words, countdown = 0, length = 90):
     pipe = r.pipeline()
     keys = GameKeyIndex(game_id)
     pipe.set(keys.game_letters_key(), letters)
-    pipe.sadd(keys.word_set_key(), *words)
+    pipe.sadd(keys.word_set_key(), *word_set)
     start_time = timezone.now() + timedelta(seconds=countdown)
     end_time = start_time + timedelta(seconds=length)
     pipe.set(keys.game_start_key(), start_time.isoformat())
