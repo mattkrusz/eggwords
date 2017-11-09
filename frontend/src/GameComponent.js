@@ -123,10 +123,12 @@ const GameTimer = ({secondsRemaining, gameStatus}) => {
 
 
 const GameScoreList = ({playerList, myPlayerId, maxScore}) => {
+
+  let scorePct = Math.min(100, parseInt((score / maxScore) * 100));
   
   let scoreList = playerList.map(({ playerId, name, score }) => <div className="score">
     <div className={"score-meter " + (myPlayerId === playerId ? "myPlayer" : "")}>
-      <span className="score-meter-fill" style={{ width: parseInt((score / maxScore) * 100) + '%'}}></span>
+      <span className="score-meter-fill" style={{ width: scorePct + '%'}}></span>
       <span className="score-label">{trim(name || playerId)}</span>
       <span className="score-amount">{score}</span>
     </div>
