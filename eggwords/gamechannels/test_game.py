@@ -148,3 +148,22 @@ def test_expire(game_id):
 def test_get_missing_game():
     game_state = game_service.get_game_state(uuid.uuid4())
     assert not game_state.exists()
+
+def test_reinit_game(game_id):        
+    p1_id = uuid.uuid4()
+    p2_id = uuid.uuid4()
+    
+    game_service.init_game(game_id, [p1_id, p2_id])
+    game_service.start_game(game_id, test_words)
+    game_service.end_game(game_id)
+    assert GameStatus.COMPLETED == game_service.get_game_status(game_id)
+
+    game_service.reinit_game(game_id)
+    gstate = game_service.get_game_state(game_id)
+    assert GameStatus.WAITING == gstate.status()
+    assert gstate.start_time is None
+    assert gstate.end_time is None
+    assert gstate.letters is None
+    assert 0 == len(gstate.word_count)
+    assert all(0 == v for k,v in gstate.score().items())
+    assert 0 == len(gstate.used_words)

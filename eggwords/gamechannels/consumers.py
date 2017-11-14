@@ -8,7 +8,7 @@ import uuid
 import json
 import random
 
-DEFAULT_GAME_LENGTH = 120
+DEFAULT_GAME_LENGTH = 1
 
 def game_group_name(game_id):
     return 'game-' + str(game_id)
@@ -62,6 +62,33 @@ def ws_joingame(message):
     })
 
     message.reply_channel.send({"accept": True, "text":response})  
+    send_game_state(game_id) 
+
+    expiry = {
+        'gameId': str(game_id), 
+        'expire_after_seconds': 600        
+    }
+    Channel('game.expire').send(expiry)
+
+def ws_reinitgame(message):
+    game_id = message['gameId']
+    group_name = game_group_name(game_id)    
+    
+    game_service.reinit_game(game_id)
+    
+    response = json.dumps({
+        'type': 'ReinitGameResponse',
+        'gameId': message['gameId']
+    })
+
+    message.reply_channel.send({"accept": True, "text":response})  
+
+    reinit_msg = json.dumps({
+        'type': 'GameReinitialized',
+        'gameId': message['gameId']
+    })
+    Group(group_name).send({'text': reinit_msg})
+
     send_game_state(game_id) 
 
 def send_game_state(game_id, game_state=None):

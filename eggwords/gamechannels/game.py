@@ -44,6 +44,9 @@ class GameState:
         player_id = str(player_id)
         return [w for w,p_id in self.used_words.items() if player_id == p_id]
 
+    def status(self):
+        return self.status_at_time()
+
     def status_at_time(self, dtime=None):
         return __derive_game_status__(self.start_time, self.end_time, dtime)
     
@@ -135,6 +138,19 @@ def init_game(game_id, player_ids):
     keys = GameKeyIndex(game_id)
     pipe.sadd(keys.game_players_key(), *(str(p) for p in player_ids))
     pipe.set(keys.game_created_key(), timezone.now().utcnow())
+    pipe.execute()
+    return game_id
+
+def reinit_game(game_id):
+    keys = GameKeyIndex(game_id)
+    pipe = r.pipeline()    
+    exclude_keys = [
+        keys.game_players_key()
+    ]
+    for k in keys:
+        if k not in exclude_keys:
+            pipe.delete(k)
+    pipe.set(keys.game_created_key(), timezone.now().utcnow())            
     pipe.execute()
     return game_id
 
