@@ -68,6 +68,14 @@ class GameClient {
 	    this.send(outbound);        
     }
 
+        console.log("reinitGame");
+        let outbound = {
+            'gameId': gameId,
+            'type': 'reinit_game'
+        };
+        this.send(outbound);     
+    }
+
     sendWord(gameId, playerId, word) {
         console.log("sendWord", word);
         let outbound = {

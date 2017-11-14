@@ -87,7 +87,10 @@ const mapStateToProps = state => {
     return {
       onStartClick: () => {
         dispatch(actionFactory.playerPushesStartGame(gameId, playerId));
-      }
+      },
+      onRestartClick: () => {
+        dispatch(actionFactory.playerPushesRestartGame(gameId, playerId));
+      }      
     }
   }
   

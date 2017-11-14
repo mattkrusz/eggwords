@@ -67,9 +67,26 @@ div {
     font-size: 16px;
     cursor: pointer;
 }
+
 #startbutton:hover {
   background-color: rgb(133, 163, 238);
+}
 
+#restartbutton {
+  background-color: rgb(218, 89, 89);
+  border: none;
+  height: 3em;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+#restartbutton:hover {
+  background-color: rgb(240, 136, 136);
 }
 
 .game-bottom {
@@ -194,4 +211,16 @@ div {
 
 .myPlayer .score-amount {
   color:#fff665;
+}
+
+.gameover {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gameover h1 {
+  font-size: 1em;
+  margin-right: 1em;
 }

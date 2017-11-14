@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-const GameInputArea = ({ letters, typed, gameStatus, onStartClick}) => {
+const GameInputArea = ({ letters, typed, gameStatus, onStartClick, onRestartClick}) => {
 
   return <div className="game-input">
       <div className="game-letters">
@@ -26,7 +26,8 @@ const GameInputArea = ({ letters, typed, gameStatus, onStartClick}) => {
       }
 
       {gameStatus === 'COMPLETED' &&
-        <h1>Game Over!</h1>
+      <div class="gameover"><h1>Game Over!</h1><button id="restartbutton" onClick={onRestartClick}>New Game</button></div>
+          
       }
   </div>
 
@@ -143,8 +144,8 @@ const GameTopArea = ({ secondsRemaining, playerList, myPlayerId, maxScore, gameS
 }
 
 const Game = ({letters, typed, myWords, oppWords, wordCount,
-  timeRemaining, players, myPlayerId, gameStatus, onStartClick,
-  maxScore, revealedWords}) => {
+  timeRemaining, players, myPlayerId, gameStatus, onStartClick, 
+  onRestartClick, maxScore, revealedWords}) => {
   
   let myList = myWords.map((w) => {
     return <li key={w}>{w}</li>
@@ -153,7 +154,7 @@ const Game = ({letters, typed, myWords, oppWords, wordCount,
   return (
     <div className="eggwords">      
       <GameTopArea secondsRemaining={timeRemaining} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus}/>
-      <GameInputArea letters={letters} typed={typed} gameStatus={gameStatus} onStartClick={onStartClick}/>
+      <GameInputArea letters={letters} typed={typed} gameStatus={gameStatus} onStartClick={onStartClick} onRestartClick={onRestartClick}/>
       <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} revealedWords={revealedWords} gameStatus={gameStatus}/>
     </div>
   )
@@ -172,6 +173,7 @@ Game.defaultProps = {
   myPlayerId: null,
   gameStatus: 'WAITING',
   onStartClick: () => {},
+  onRestartClick: () => { },
   revealedWords: [],
   maxScore: -1
 };

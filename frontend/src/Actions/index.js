@@ -2,11 +2,7 @@
 export const NEW_GAME = 'NEW_GAME';
 export const JOIN_GAME = 'JOIN_GAME';
 export const UPDATE_GAME_STATE = 'UPDATE_GAME_STATE';
-
-// These are just game states:
-// export const GAME_END = 'GAME_END';
-// export const GAME_START = 'GAME_START';
-
+export const REINITIALIZE_GAME = 'REINITIALIZE_GAME';
 export const RECEIVE_GAME_STATE  = 'RECEIVE_GAME_STATE ';
 export const USER_SUBMIT_WORD = 'USER_SUBMIT_WORD';
 export const REQUEST_WORD = 'REQUEST_WORD';
@@ -105,6 +101,14 @@ export class ActionFactory {
         }
     }
 
+    gameReinitialized(gameId) {
+        return {
+            type: REINITIALIZE_GAME,
+            gameId: gameId,
+            receivedAt: Date.now()
+        }
+    }
+
     wordResponse(gameId, playerId, word, result) {
 
         return (dispatch) => {
@@ -141,6 +145,14 @@ export class ActionFactory {
         // Fires the start game request
         return (dispatch) => {
             this.gameClient.startGame(gameId, playerId);
+        }
+    }  
+
+    playerPushesRestartGame(gameId, playerId) {
+        // Thunk
+        // Fires the reinit game request
+        return (dispatch) => {
+            this.gameClient.reinitGame(gameId, playerId);
         }
     }  
 

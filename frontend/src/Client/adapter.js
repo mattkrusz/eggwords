@@ -44,6 +44,13 @@ export default class EventAdapter {
                 let revealWordsAction = this.actionFactory.revealWords(e.action.gameId, e.action.words);
                 this.store.dispatch(revealWordsAction);
         });
+
+        this.gameStream
+            .filter((e) => e.action.type === 'GameReinitialized')
+            .subscribe((e) => {
+                let reinitAction = this.actionFactory.gameReinitialized(e.action.gameId);
+                this.store.dispatch(reinitAction);
+        });        
     }
 
 }

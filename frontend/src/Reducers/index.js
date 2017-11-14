@@ -17,7 +17,6 @@ function game (
 		gameId: null,
 		gameStatus: null,
         letters: '',
-        localLetters: null,
 		usedWords: {},
 		startTime: null,
         endTime: null,
@@ -51,6 +50,11 @@ function game (
             revealedWords: action.words
         });
         break;
+      case ActionTypes.REINITIALIZE_GAME:
+        return Object.assign({}, state, {
+            revealedWords: null
+        });
+        break;        
       default:
         return state;
     }
@@ -69,6 +73,12 @@ function player (
       case ActionTypes.JOIN_GAME:
         return Object.assign({}, state, {
             playerId: action.playerId,
+        });
+        break;
+      case ActionTypes.REINITIALIZE_GAME:
+        return Object.assign({}, state, {
+            typed: '',
+            localLetters: null
         });
         break;
       case ActionTypes.ENTER_LETTER:
