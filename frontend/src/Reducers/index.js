@@ -118,7 +118,6 @@ function player (
 
 function requests (
     state = {
-        requestsOutstanding: false,
         acceptedWords: [],
         lastRejected: null,
         lastShuffle: null
@@ -149,6 +148,13 @@ function requests (
             lastShuffle: action.receivedAt
         });
         break;
+      case ActionTypes.REINITIALIZE_GAME:
+        return Object.assign({}, state, {
+            acceptedWords: [],
+            lastRejected: null,
+            lastShuffle: null
+        });
+        break;        
       default:
         return state;
     }
