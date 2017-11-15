@@ -53,11 +53,12 @@ export default class EventAdapter {
         }); 
         
         this.gameStream
-            .filter((e) => e.action.type === 'NameChangeResponse')
+            .filter((e) => e.action.type === 'PlayerInfoUpdate')
             .subscribe((e) => {
+                console.log("Received PlayerInfoUpdate", e);
                 if (e.action.accept) {
-                    let changeNameAction = this.actionFactory.changeName(e.action.gameId, e.action.playerId, e.action.name);
-                    this.store.dispatch(changeNameAction);
+                    let updatePlayerAction = this.actionFactory.updatePlayerInfo(e.action.gameId, e.action.playerId, e.action.info);
+                    this.store.dispatch(updatePlayerAction);
                 }                
         }); 
     }

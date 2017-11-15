@@ -16,7 +16,7 @@ export const CLEAR_TYPED = 'CLEAR_TYPED';
 export const SHUFFLE_LETTERS = 'SHUFFLE_LETTERS';
 export const REVEAL_WORDS = 'REVEAL_WORDS';
 export const REQUEST_CHANGE_NAME = 'REQUEST_CHANGE_NAME';
-export const ACCEPT_CHANGE_NAME = 'ACCEPT_CHANGE_NAME';
+export const UPDATE_PLAYER_INFO = 'UPDATE_PLAYER_INFO';
 export const TICK = 'TICK';
 
 // Probably also need: SHUFFLE
@@ -87,12 +87,12 @@ export class ActionFactory {
         }        
     }
 
-    changeName(gameId, playerId, name) {
+    updatePlayerInfo(gameId, playerId, newInfo) {
         return {
-            type: ACCEPT_CHANGE_NAME,
+            type: UPDATE_PLAYER_INFO,
             gameId: gameId,
             playerId: playerId,
-            name: name,
+            info: newInfo,
             receivedAt: Date.now()
         }
     }

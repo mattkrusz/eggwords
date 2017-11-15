@@ -100,7 +100,7 @@ def test_score():
 
     game_state0 = GameState(
         uuid.uuid4(),
-        [p1_id, p2_id],
+        {p1_id: {}, p2_id: {}},
         { },
         (timezone.now() - timedelta(seconds=45)).isoformat(),
         (timezone.now() + timedelta(seconds=45)).isoformat(),
@@ -114,7 +114,7 @@ def test_score():
 
     game_state1 = GameState(
         uuid.uuid4(), 
-        [p1_id, p2_id],     
+        {p1_id: {}, p2_id: {}},
         {  'spiders': p1_id,
            'diss': p1_id,
            'redips': p1_id,
@@ -167,3 +167,11 @@ def test_reinit_game(game_id):
     assert 0 == len(gstate.word_count)
     assert all(0 == v for k,v in gstate.score().items())
     assert 0 == len(gstate.used_words)
+
+def test_player_info(game_id):
+    p1_id = uuid.uuid4()
+    game_service.init_game(game_id, [p1_id])
+    game_service.update_player_name(game_id, p1_id, 'TestName')
+    gstate = game_service.get_game_state(game_id)
+    assert 'TestName' == gstate.player_info[str(p1_id)]['name']
+    

@@ -22,6 +22,7 @@ function game (
         endTime: null,
         timeRemaining: null,
         playerIds: [],
+        playerInfo: {},
         revealedWords: null
 	},
     action
@@ -45,6 +46,13 @@ function game (
       case ActionTypes.UPDATE_GAME_STATE:
         return Object.assign({}, state, action.gameState);
         break;
+      case ActionTypes.UPDATE_PLAYER_INFO:
+        return Object.assign({}, state, {
+            playerInfo: { ...state.playerInfo,
+                [action.playerId]: action.info,
+            }
+        });
+        break;        
       case ActionTypes.REVEAL_WORDS:
         return Object.assign({}, state, {
             revealedWords: action.words

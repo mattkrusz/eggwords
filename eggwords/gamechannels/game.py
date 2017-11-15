@@ -29,10 +29,11 @@ def json_fallback(obj):
     raise TypeError ("Type %s not serializable" % type(obj))
 
 class GameState:    
-    def __init__(self, id, player_ids, used_words, start_time, end_time, created_time, 
+    def __init__(self, id, player_info, used_words, start_time, end_time, created_time, 
         letters, word_count):
         self.id = id
-        self.player_ids = player_ids
+        self.player_ids = list(player_info.keys())
+        self.player_info = player_info
         self.used_words = used_words
         self.start_time = start_time
         self.end_time = end_time
@@ -55,8 +56,9 @@ class GameState:
 
     def json_dict(self):
         return {
-            'gameId': str(self.id),
+            'gameId': str(self.id),    
             'playerIds': list(self.player_ids),
+            'playerInfo': self.player_info,
             'usedWords': self.used_words,
             'wordCount': self.word_count,
             'startTime': self.start_time,
@@ -136,7 +138,9 @@ class GameKeyIndex:
 def init_game(game_id, player_ids):
     pipe = r.pipeline()
     keys = GameKeyIndex(game_id)
-    pipe.sadd(keys.game_players_key(), *(str(p) for p in player_ids))
+    
+    player_info = {pid : '{}' for pid in player_ids }
+    pipe.hmset(keys.game_players_key(), player_info)
     pipe.set(keys.game_created_key(), timezone.now().utcnow())
     pipe.execute()
     return game_id
@@ -157,7 +161,7 @@ def reinit_game(game_id):
 def add_player(game_id, player_id):
     pipe = r.pipeline()
     keys = GameKeyIndex(game_id)
-    pipe.sadd(keys.game_players_key(), str(player_id))
+    pipe.hset(keys.game_players_key(), str(player_id), '{}')
     pipe.execute()
     return game_id
 
@@ -207,7 +211,7 @@ def get_game_words(game_id):
 def get_game_state(game_id):
     pipe = r.pipeline()
     keys = GameKeyIndex(game_id)
-    pipe.smembers(keys.game_players_key())
+    pipe.hgetall(keys.game_players_key())
     pipe.hgetall(keys.used_words_set_key())
     pipe.get(keys.game_start_key())
     pipe.get(keys.game_end_key())
@@ -215,9 +219,13 @@ def get_game_state(game_id):
     pipe.get(keys.game_letters_key())
     pipe.lrange(keys.game_wc_key(), 0, -1)
     res = pipe.execute()
+
+    player_info = res[0]
+    player_info_deserialized = { pid:json.loads(info_json) for (pid, info_json) in player_info.items() }
+
     return GameState(
         game_id,
-        res[0],
+        player_info_deserialized,
         res[1],
         res[2],
         res[3],
@@ -275,3 +283,10 @@ def clean_up_game(game_id):
     for k in r.scan_iter(match=keys.game_key() + "*"):
         pipe.delete(k)
     pipe.execute()
+
+def update_player_name(game_id, player_id, new_name):
+    keys = GameKeyIndex(game_id)
+    player_info = json.loads(r.hget(keys.game_players_key(), player_id))
+    player_info['name'] = new_name
+    r.hset(keys.game_players_key(), player_id, json.dumps(player_info))
+    return player_info

@@ -62,9 +62,9 @@ const mapStateToProps = state => {
 
     let players = state.game.playerIds.map((pId) => (
         {
+            ...(state.game.playerInfo[pId] || {}),
             playerId: pId,
-            score: state.game.score[pId],
-            name: null
+            score: state.game.score[pId]
         }
     ));
 
