@@ -33,11 +33,12 @@ const gc = new GameClient();
 const actionFactory = new Actions.ActionFactory(gc);
 const adapter = new EventAdapter(gc, store);
 let gameId = null;
-let playerId = storage.getItem("playerId");;
+let playerId = storage.getItem("playerId");
+let playerName = storage.getItem("playerName");
 
 gc.connect().then(() => {
     if (window.location.hash == '') {
-        store.dispatch(actionFactory.playerCreatesGame());
+        store.dispatch(actionFactory.playerCreatesGame(playerId));
     } else {
         gameId = window.location.hash.slice(1);
         store.dispatch(actionFactory.playerJoinsGame(playerId, gameId));
@@ -45,10 +46,14 @@ gc.connect().then(() => {
 });
 
 gc.onJoinGame().subscribe((e) => {
+    console.log(e);
     gameId = e.action.gameId;
     playerId = e.action.playerId;
     storage.setItem("playerId", playerId)
     window.history.pushState(null, null, '#' + gameId);
+    if (playerName != null) {
+        store.dispatch(actionFactory.requestChangeName(gameId, playerId, playerName));
+    }
 });
 
 const mapStateToProps = state => {
@@ -92,6 +97,7 @@ const mapStateToProps = state => {
         dispatch(actionFactory.playerPushesRestartGame(gameId, playerId));
       },
       onNameChange: (n) => {
+        storage.setItem("playerName", n);
         dispatch(actionFactory.requestChangeName(gameId, playerId, n));
       }
     }
