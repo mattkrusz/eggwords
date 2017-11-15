@@ -27,7 +27,7 @@ const GameInputArea = ({ letters, typed, gameStatus, onStartClick, onRestartClic
       }
 
       {gameStatus === 'COMPLETED' &&
-      <div class="gameover"><h1>Game Over!</h1><button id="restartbutton" onClick={onRestartClick}>New Game</button></div>
+      <div className="gameover"><h1>Game Over!</h1><button id="restartbutton" onClick={onRestartClick}>New Game</button></div>
           
       }
   </div>
