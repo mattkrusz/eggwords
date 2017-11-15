@@ -176,6 +176,18 @@ def reveal_words(game_id):
     })
     Group(group_name).send({'text': response})
 
+def ws_change_name(message):
+    game_id = message['gameId']
+    player_id = message['playerId']
+    name = message['name']
+    response = json.dumps({
+        'type': 'NameChangeResponse',
+        'gameId': game_id,
+        'playerId': player_id,
+        'name': name,
+        'accept': True
+    })
+    message.reply_channel.send({'text': response})
 
 # Connected to websocket.disconnect
 def ws_disconnect(message):

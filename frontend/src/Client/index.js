@@ -88,6 +88,17 @@ class GameClient {
         this.send(outbound);
     }
 
+    changeName(gameId, playerId, name) {
+        console.log("changeName", name);
+        let outbound = {
+            'gameId': gameId,
+            'type': 'change_name',
+            'name': name,
+            'playerId': playerId
+        };
+        this.send(outbound);        
+    }
+
     send(msgObj) {
         console.log("sending", msgObj);
         this.wsBridge.send(msgObj);

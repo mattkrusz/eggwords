@@ -90,7 +90,10 @@ const mapStateToProps = state => {
       },
       onRestartClick: () => {
         dispatch(actionFactory.playerPushesRestartGame(gameId, playerId));
-      }      
+      },
+      onNameChange: (n) => {
+        dispatch(actionFactory.requestChangeName(gameId, playerId, n));
+      }
     }
   }
   
@@ -108,29 +111,37 @@ ReactDOM.render(
 registerServiceWorker();
 
 document.addEventListener("keydown", (e) => {
-    e.preventDefault();
-    let c = e.keyCode;
-    if (c >= 65 && c <= 90 ) {
-        store.dispatch(actionFactory.typeLetter(e.key));
-    } else {
-        switch (c) {
-            case 8:
-                store.dispatch(actionFactory.backspace());
-                break;
-            case 32:
-                store.dispatch(actionFactory.shuffleLetters());
-                break;
-            case 13:
-                store.dispatch(actionFactory.playerEntersWord(gameId, playerId));
-                break;
-            default:
-                break;                     
+    console.log(e);
+    if(e.target.tagName === 'BODY' 
+        && !e.metaKey
+        && !e.altKey
+        && !e.ctrlKey
+        && !e.shiftKey) {
+        e.preventDefault();
+        let c = e.keyCode;
+        if (c >= 65 && c <= 90) {
+            store.dispatch(actionFactory.typeLetter(e.key));
+        } else {
+            switch (c) {
+                case 8:
+                    store.dispatch(actionFactory.backspace());
+                    break;
+                case 32:
+                    store.dispatch(actionFactory.shuffleLetters());
+                    break;
+                case 13:
+                    store.dispatch(actionFactory.playerEntersWord(gameId, playerId));
+                    break;
+                default:
+                    break;
+            }
         }
-    }
+    }    
 });
 
 function tick() {
     store.dispatch(actionFactory.tick());
-    setTimeout(tick, 400);
+    setTimeout(tick, 5000);
 }
 tick();
+localStorage.debug = '*';

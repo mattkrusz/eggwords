@@ -15,6 +15,8 @@ export const BACKSPACE = 'BACKSPACE';
 export const CLEAR_TYPED = 'CLEAR_TYPED';
 export const SHUFFLE_LETTERS = 'SHUFFLE_LETTERS';
 export const REVEAL_WORDS = 'REVEAL_WORDS';
+export const REQUEST_CHANGE_NAME = 'REQUEST_CHANGE_NAME';
+export const ACCEPT_CHANGE_NAME = 'ACCEPT_CHANGE_NAME';
 export const TICK = 'TICK';
 
 // Probably also need: SHUFFLE
@@ -77,12 +79,22 @@ export class ActionFactory {
     typeLetter(letter) {
         return (dispatch, getState) => {
             const { player } = getState();
-            if (player.localLetters.includes(letter)) {
+            if (player.localLetters && player.localLetters.includes(letter)) {
                 dispatch(this.enterLetter(letter));
             } else {
                 dispatch(this.rejectLetter(letter));
             }
         }        
+    }
+
+    changeName(gameId, playerId, name) {
+        return {
+            type: ACCEPT_CHANGE_NAME,
+            gameId: gameId,
+            playerId: playerId,
+            name: name,
+            receivedAt: Date.now()
+        }
     }
 
     shuffleLetters() {
@@ -194,6 +206,19 @@ export class ActionFactory {
             words: words,
             receivedAt: Date.now()
         }
+    }
+
+    requestChangeName(gameId, playerId, newName) {
+        return (dispatch) => {
+            this.gameClient.changeName(gameId, playerId, newName);
+            dispatch({
+                type: REQUEST_CHANGE_NAME,
+                gameId: gameId,
+                playerId: playerId,
+                name: newName,
+                receivedAt: Date.now()
+            });
+        }            
     }
 
 }

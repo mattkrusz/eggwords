@@ -5,7 +5,7 @@ import { action } from '@storybook/addon-actions';
 import { linkTo } from '@storybook/addon-links';
 
 import Game from '../GameComponent';
-import '../index.css'
+import '../index.css';
 
 storiesOf('Game', module)
   .add('Basic', () => <Game 
@@ -70,4 +70,4 @@ storiesOf('Game', module)
     maxScore={10000}
     gameStatus={'COMPLETED'}
     onStartClick={() => { }}
-    onRestartClick={() => { }} />)    ;    
+    onRestartClick={() => { }} />)

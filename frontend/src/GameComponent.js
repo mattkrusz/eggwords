@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { RIEToggle, RIEInput, RIETextArea, RIENumber, RIETags, RIESelect } from 'riek';
 
 const GameInputArea = ({ letters, typed, gameStatus, onStartClick, onRestartClick}) => {
 
@@ -122,13 +123,44 @@ const GameTimer = ({secondsRemaining, gameStatus}) => {
   }
 }
 
+class RieWrapper extends React.Component {
 
-const GameScoreList = ({playerList, myPlayerId, maxScore}) => {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return <RIEInput
+      {...this.props} /> 
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    // https://reactjs.org/docs/react-component.html#shouldcomponentupdate
+
+    // This is a hack to prevent the editable component from refreshing (and losing the input ref) every
+    // time the parent does.
+
+    // I'm only using this component temporarily, so I'm not too worried about the drawbacks here.
+
+    return this.props.value !== nextProps.value;
+  }
+
+}
+
+
+const GameScoreList = ({playerList, myPlayerId, maxScore, onNameChange}) => {
   
-  let scoreList = playerList.map(({ playerId, name, score }) => <div className="score">
+  let scoreList = playerList.map(({ playerId, name, score }) => <div className="score" key={playerId + "-score"}>
     <div className={"score-meter " + (myPlayerId === playerId ? "myPlayer" : "")}>
       <span className="score-meter-fill" style={{ width: Math.min(100, parseInt((score / maxScore) * 100)) + '%'}}></span>
-      <span className="score-label">{trim(name || playerId)}</span>
+      {myPlayerId === playerId ? 
+        <RieWrapper key={playerId + '-score-input'}
+          value={trim(name || playerId)}
+          change={(o) => onNameChange(o.name)}
+          propName='name'
+          className='score-label'/> : 
+        <span className="score-label">{trim(name || playerId)}</span> }
+     
       <span className="score-amount">{score}</span>
     </div>
   </div>)
@@ -136,16 +168,16 @@ const GameScoreList = ({playerList, myPlayerId, maxScore}) => {
   return <div className="score-list">{scoreList}</div>
 }
 
-const GameTopArea = ({ secondsRemaining, playerList, myPlayerId, maxScore, gameStatus}) => {
+const GameTopArea = ({ secondsRemaining, playerList, myPlayerId, maxScore, gameStatus, onNameChange}) => {
   return <div className="game-top"> 
     <GameTimer secondsRemaining={secondsRemaining} gameStatus={gameStatus}/>
-    <GameScoreList playerList={playerList} myPlayerId={myPlayerId} maxScore={maxScore} />
+    <GameScoreList playerList={playerList} myPlayerId={myPlayerId} maxScore={maxScore} onNameChange={onNameChange}/>
   </div>
 }
 
 const Game = ({letters, typed, myWords, oppWords, wordCount,
   timeRemaining, players, myPlayerId, gameStatus, onStartClick, 
-  onRestartClick, maxScore, revealedWords}) => {
+  onRestartClick, onNameChange, maxScore, revealedWords}) => {
   
   let myList = myWords.map((w) => {
     return <li key={w}>{w}</li>
@@ -153,7 +185,7 @@ const Game = ({letters, typed, myWords, oppWords, wordCount,
 
   return (
     <div className="eggwords">      
-      <GameTopArea secondsRemaining={timeRemaining} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus}/>
+      <GameTopArea secondsRemaining={timeRemaining} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus} onNameChange={onNameChange}/>
       <GameInputArea letters={letters} typed={typed} gameStatus={gameStatus} onStartClick={onStartClick} onRestartClick={onRestartClick}/>
       <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} revealedWords={revealedWords} gameStatus={gameStatus}/>
     </div>

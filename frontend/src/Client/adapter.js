@@ -50,7 +50,16 @@ export default class EventAdapter {
             .subscribe((e) => {
                 let reinitAction = this.actionFactory.gameReinitialized(e.action.gameId);
                 this.store.dispatch(reinitAction);
-        });        
+        }); 
+        
+        this.gameStream
+            .filter((e) => e.action.type === 'NameChangeResponse')
+            .subscribe((e) => {
+                if (e.action.accept) {
+                    let changeNameAction = this.actionFactory.changeName(e.action.gameId, e.action.playerId, e.action.name);
+                    this.store.dispatch(changeNameAction);
+                }                
+        }); 
     }
 
 }
