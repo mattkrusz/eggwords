@@ -35,6 +35,7 @@ div {
 .game-letters {
   display: inline-flex;
   flex-direction: row;
+  min-height: 1em;
 }
 
 .game-letter {
