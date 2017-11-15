@@ -24,7 +24,7 @@ def ws_receive(message):
 
 def ws_newgame(message):
     game_id = uuid.uuid4()
-    player_id = message.get("player_id")
+    player_id = message.get("playerId")
     if not player_id:
         player_id = uuid.uuid4()
     group_name = game_group_name(game_id)
