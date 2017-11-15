@@ -141,7 +141,7 @@ document.addEventListener("keydown", (e) => {
 
 function tick() {
     store.dispatch(actionFactory.tick());
-    setTimeout(tick, 5000);
+    setTimeout(tick, 400);
 }
 tick();
 localStorage.debug = '*';
