@@ -18,6 +18,12 @@ export const REQUEST_CHANGE_NAME = 'REQUEST_CHANGE_NAME';
 export const UPDATE_PLAYER_INFO = 'UPDATE_PLAYER_INFO';
 export const TICK = 'TICK';
 
+export const REJECT_REASON = {
+    NOT_A_WORD: 'NOT_A_WORD',
+    WORD_USED_BY_SELF:'WORD_USED_BY_SELF',
+    WORD_USED:'WORD_USED'
+}
+
 // Probably also need: SHUFFLE
 
 export class ActionFactory {
@@ -122,13 +128,27 @@ export class ActionFactory {
 
     wordResponse(gameId, playerId, word, result) {
 
-        return (dispatch) => {
+        return (dispatch, getState) => {
+            
+            let rejectReason = null;
+            if (result == 'REJECT') {
+                let wordUsedBy = getState().game.usedWords[word];
+                if (wordUsedBy == null) {
+                    rejectReason = REJECT_REASON.NOT_A_WORD;
+                } else if (wordUsedBy == playerId) {
+                    rejectReason = REJECT_REASON.WORD_USED_BY_SELF;                    
+                } else {
+                    rejectReason = REJECT_REASON.WORD_USED;
+                }
+            }              
+
             dispatch({
                 type: WORD_RESPONSE,
                 gameId: gameId,
                 playerId: playerId,
                 word: word,
                 result: result,
+                rejectReason: rejectReason,
                 receivedAt: Date.now()
             });
             if (result === 'ACCEPT') {
