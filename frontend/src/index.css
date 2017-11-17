@@ -44,18 +44,60 @@ div {
   color: gray;
 }
 
+.game-letter.accept {
+  animation-name: flash;
+  animation-duration: .75s;
+  animation-iteration-count: 1;
+  animation-direction: alternate;
+}
+
+@keyframes shake {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-60deg);
+  }
+  75% {
+    transform: rotate(60deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes flash {
+  0% {
+    
+  }
+  25% {
+    color: rgb(104, 211, 104);
+    font-weight: bold;
+  }
+  100% {
+  }
+}
+
 .input-letters {
   display: inline-flex;
   flex-direction: row;
+  border-bottom: 1px solid black;
   height: 1em;
 }
 
 .input-letter {
   width: 1em;
   text-align: center;
-  border-bottom: 1px solid black;
   color: black;
 }
+
+.input-letter.reject {
+  animation-name: shake;
+  animation-duration: .25s;
+  animation-iteration-count: 1;
+  animation-direction: alternate;
+}
+
 
 #startbutton {
     background-color: rgb(89, 123, 218);

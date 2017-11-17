@@ -5,6 +5,7 @@ import { action } from '@storybook/addon-actions';
 import { linkTo } from '@storybook/addon-links';
 
 import Game from '../GameComponent';
+import GameInput from '../GameInputComponent';
 import '../index.css';
 
 storiesOf('Game', module)
@@ -71,3 +72,19 @@ storiesOf('Game', module)
     gameStatus={'COMPLETED'}
     onStartClick={() => { }}
     onRestartClick={() => { }} />)
+  .add('GameInput Rejected', () => <GameInput
+    letters={'sr'}
+    typed={'dipes'}
+    gameStatus={'PLAYING'}
+    onStartClick={() => {}}
+    onRestartClick={() => { }}
+    notifyReject={true} />)
+  .add('GameInput Accepted', () => <GameInput
+    letters={'spiders'}
+    typed={''}
+    gameStatus={'PLAYING'}
+    onStartClick={() => { }}
+    onRestartClick={() => { }}
+    inputStatus={1}
+    notifyAccept={true}
+    lastAccepted={'spider'} />)    

@@ -1,38 +1,6 @@
 import React, { Component } from 'react';
 import { RIEToggle, RIEInput, RIETextArea, RIENumber, RIETags, RIESelect } from 'riek';
-
-const GameInputArea = ({ letters, typed, gameStatus, onStartClick, onRestartClick}) => {
-
-  return <div className="game-input">
-      <div className="game-letters">
-        {
-          letters.split('').map(r => <div className="game-letter">{r}</div>)
-        }
-      </div>
-
-      { gameStatus === 'WAITING' && 
-          <button id="startbutton" onClick={onStartClick}>Start!</button> 
-      }
-
-      {gameStatus === 'SCHEDULED' &&
-        <h1>Starting soon ...</h1>
-      }
-
-      {gameStatus === 'PLAYING' &&
-        <div className="input-letters">
-          {
-            typed.split('').map(t => <div className="input-letter">{t}</div>)
-          }
-        </div>   
-      }
-
-      {gameStatus === 'COMPLETED' &&
-      <div className="gameover"><h1>Game Over!</h1><button id="restartbutton" onClick={onRestartClick}>New Game</button></div>
-          
-      }
-  </div>
-
-};
+import GameInputComponent from './GameInputComponent';
 
 const LockedWord = ({len}) => {
   let letters = new Array(len);
@@ -177,7 +145,8 @@ const GameTopArea = ({ secondsRemaining, playerList, myPlayerId, maxScore, gameS
 
 const Game = ({letters, typed, myWords, oppWords, wordCount,
   timeRemaining, players, myPlayerId, gameStatus, onStartClick, 
-  onRestartClick, onNameChange, maxScore, revealedWords}) => {
+  onRestartClick, onNameChange, maxScore, revealedWords,
+  notifyAccept, notifyReject, lastAccepted, lastRejected}) => {
   
   let myList = myWords.map((w) => {
     return <li key={w}>{w}</li>
@@ -186,7 +155,9 @@ const Game = ({letters, typed, myWords, oppWords, wordCount,
   return (
     <div className="eggwords">      
       <GameTopArea secondsRemaining={timeRemaining} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus} onNameChange={onNameChange}/>
-      <GameInputArea letters={letters} typed={typed} gameStatus={gameStatus} onStartClick={onStartClick} onRestartClick={onRestartClick}/>
+      <GameInputComponent letters={letters} typed={typed} gameStatus={gameStatus} 
+        notifyAccept={notifyAccept} notifyReject={notifyReject} lastAccepted={lastAccepted}
+        onStartClick={onStartClick} onRestartClick={onRestartClick}/>
       <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} revealedWords={revealedWords} gameStatus={gameStatus}/>
     </div>
   )

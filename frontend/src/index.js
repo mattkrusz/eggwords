@@ -74,19 +74,23 @@ const mapStateToProps = state => {
     ));
 
     return {
-      letters: state.player.localLetters || '',
-      typed: typed,
-      myWords: state.requests.acceptedWords.map((aw) => aw.word),
-      oppWords: oppWords,
-      wordCount: state.game.wordCount || [],      
-      timeRemaining: state.game.timeRemaining,
-      myPlayerId: playerId,
-      players: players,
-      maxScore: 10000,
-      gameStatus: state.game.gameStatus,
-      revealedWords: state.game.revealedWords
+        letters: state.player.localLetters || '',
+        typed: typed,
+        myWords: state.requests.acceptedWords.map((aw) => aw.word),
+        oppWords: oppWords,
+        wordCount: state.game.wordCount || [],
+        timeRemaining: state.game.timeRemaining,
+        myPlayerId: playerId,
+        players: players,
+        maxScore: 10000,
+        gameStatus: state.game.gameStatus,
+        revealedWords: state.game.revealedWords,
+        notifyAccept: state.player.notifyAccept,
+        notifyReject: state.player.notifyReject,
+        lastAccepted: state.player.lastAccepted,
+        lastRejected: state.player.lastRejected
     }
-  }
+}
   
   const mapDispatchToProps = dispatch => {
     return {

@@ -68,59 +68,82 @@ function game (
     }
 }
 
-function player (
+function player(
     state = {
         playerId: null,
         typed: '',
-        localLetters: null
-	},
+        localLetters: null,
+        notifyAccept: false,
+        notifyReject: false,
+        lastAccepted: null,
+        lastRejected: null
+    },
     action
-  ) {
+) {
     switch (action.type) {
-      case ActionTypes.NEW_GAME:        
-      case ActionTypes.JOIN_GAME:
-        return Object.assign({}, state, {
-            playerId: action.playerId,
-        });
-        break;
-      case ActionTypes.REINITIALIZE_GAME:
-        return Object.assign({}, state, {
-            typed: '',
-            localLetters: null
-        });
-        break;
-      case ActionTypes.ENTER_LETTER:
-        let ls = state.localLetters;
-        let x = ls.indexOf(action.letter);
-        return Object.assign({}, state, {
-            typed: state.typed + action.letter,
-            localLetters: ls.slice(0, x) + ls.slice(x + 1)
-        });
-        break;
-      case ActionTypes.UPDATE_GAME_STATE:
-        if (state.localLetters == null 
+        case ActionTypes.NEW_GAME:
+        case ActionTypes.JOIN_GAME:
+            return Object.assign({}, state, {
+                playerId: action.playerId,
+            });
+            break;
+        case ActionTypes.REINITIALIZE_GAME:
+            return Object.assign({}, state, {
+                typed: '',
+                localLetters: null
+            });
+            break;
+        case ActionTypes.ENTER_LETTER:
+            let ls = state.localLetters;
+            let x = ls.indexOf(action.letter);
+            return Object.assign({}, state, {
+                typed: state.typed + action.letter,
+                localLetters: ls.slice(0, x) + ls.slice(x + 1)
+            });
+            break;
+        case ActionTypes.UPDATE_GAME_STATE:
+            if (state.localLetters == null
                 && action.gameState.letters != null) {
-            let newState = Object.assign({}, state);
-            newState.localLetters = action.gameState.letters;            
-            return newState;
-        } else {
+                let newState = Object.assign({}, state);
+                newState.localLetters = action.gameState.letters;
+                return newState;
+            } else {
+                return state;
+            }
+            break;
+        case ActionTypes.BACKSPACE:
+        case ActionTypes.CLEAR_TYPED:
+            return Object.assign({}, state, {
+                typed: '',
+                localLetters: state.typed + state.localLetters
+            });
+            break;
+        case ActionTypes.SHUFFLE_LETTERS:
+            let shuffled = shuffleString(state.localLetters);
+            return Object.assign({}, state, {
+                localLetters: shuffled
+            });
+        case ActionTypes.WORD_RESPONSE:
+            if (action.result === 'ACCEPT') {
+                return { ...state,
+                    lastAccepted: action.word,
+                    notifyAccept: true
+                };
+            } else if (action.result === 'REJECT') {
+                return {
+                    ...state,
+                    lastRejected: action.word,
+                    notifyReject: true
+                };
+            }
+            break;
+        case ActionTypes.END_RESPONSE_NOTIFICATION:
+            return { ...state, 
+                notifyAccept: false,
+                notifyReject: false
+            }            
+        default:
             return state;
-        }
-        break;        
-      case ActionTypes.BACKSPACE: 
-      case ActionTypes.CLEAR_TYPED:
-        return Object.assign({}, state, {
-            typed: '',
-            localLetters: state.typed + state.localLetters
-        });
-        break;   
-      case ActionTypes.SHUFFLE_LETTERS:
-        let shuffled = shuffleString(state.localLetters);
-        return Object.assign({}, state, {
-            localLetters: shuffled
-        });                              
-      default:
-        return state;
     }
 }
 

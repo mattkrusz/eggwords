@@ -7,8 +7,7 @@ export const RECEIVE_GAME_STATE  = 'RECEIVE_GAME_STATE ';
 export const USER_SUBMIT_WORD = 'USER_SUBMIT_WORD';
 export const REQUEST_WORD = 'REQUEST_WORD';
 export const WORD_RESPONSE = 'WORD_RESPONSE';
-export const ACCEPT_WORD = 'ACCEPT_WORD';
-export const REJECT_WORD = 'REJECT_WORD';
+export const END_RESPONSE_NOTIFICATION = 'END_RESPONSE_NOTIFICATION';
 export const ENTER_LETTER = 'ENTER_LETTER';
 export const REJECT_LETTER = 'REJECT_LETTER';
 export const BACKSPACE = 'BACKSPACE';
@@ -135,6 +134,11 @@ export class ActionFactory {
             if (result === 'ACCEPT') {
                 dispatch(this.clearTyped());
             }
+            setTimeout(() => {
+                dispatch({
+                    type: END_RESPONSE_NOTIFICATION
+                });
+            }, 500);
         }
     }    
     
