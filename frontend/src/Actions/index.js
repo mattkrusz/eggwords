@@ -129,7 +129,7 @@ export class ActionFactory {
     wordResponse(gameId, playerId, word, result) {
 
         return (dispatch, getState) => {
-            
+
             let rejectReason = null;
             if (result == 'REJECT') {
                 let wordUsedBy = getState().game.usedWords[word];
@@ -140,6 +140,7 @@ export class ActionFactory {
                 } else {
                     rejectReason = REJECT_REASON.WORD_USED;
                 }
+                
             }              
 
             dispatch({

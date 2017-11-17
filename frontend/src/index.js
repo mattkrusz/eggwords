@@ -15,6 +15,17 @@ import GameClient from './Client';
 import EventAdapter from './Client/adapter';
 
 let storage = window.localStorage;
+        
+
+let reduxActionStream = new Rx.Subject();
+const rxMiddleware = store => next => action => {
+    if (action.type != 'TICK' 
+        && action.type != 'ENTER_LETTER' 
+        && action.type != 'REJECT_LETTER') {
+        reduxActionStream.next(action);
+    }
+    return next(action)
+}
 
 const loggerMiddleware = createLogger({
     predicate: (getState, action) => {
@@ -25,7 +36,8 @@ const store = createStore(
     rootReducer,
     applyMiddleware(
       thunkMiddleware,
-      loggerMiddleware 
+      loggerMiddleware,
+      rxMiddleware
     )
 );
 
@@ -121,7 +133,6 @@ ReactDOM.render(
 registerServiceWorker();
 
 document.addEventListener("keydown", (e) => {
-    console.log(e);
     if(e.target.tagName === 'BODY' 
         && !e.metaKey
         && !e.altKey
@@ -133,13 +144,13 @@ document.addEventListener("keydown", (e) => {
             store.dispatch(actionFactory.typeLetter(e.key));
         } else {
             switch (c) {
-                case 8:
+                case 8: // Backspace
                     store.dispatch(actionFactory.backspace());
                     break;
-                case 32:
+                case 32: // Space
                     store.dispatch(actionFactory.shuffleLetters());
                     break;
-                case 13:
+                case 13: // Enter
                     store.dispatch(actionFactory.playerEntersWord(gameId, playerId));
                     break;
                 default:
@@ -155,3 +166,21 @@ function tick() {
 }
 tick();
 localStorage.debug = '*';
+
+reduxActionStream
+    .filter((action) => (action.type === Actions.WORD_RESPONSE))
+    .subscribe((a) => {
+        // TODO - This should be a general system for hooking game events.
+        if (a.result === 'REJECT') {
+            let audio = document.getElementById("audio-reject-naw");
+            audio.pause();
+            audio.currentTime = 0;
+            audio.play();
+        } else {
+            let audio = document.getElementById("audio-accept");
+            audio.pause();
+            audio.currentTime = 0;
+            audio.play();  
+        }
+    }
+);
