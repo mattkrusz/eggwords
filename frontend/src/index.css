@@ -242,6 +242,10 @@ div {
   color:#fff665;
 }
 
+.myPlayer input.score-label {
+  color: black;
+}
+
 .score-amount {
   line-height: 1em;
   display: block;
