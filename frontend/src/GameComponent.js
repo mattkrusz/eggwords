@@ -5,7 +5,9 @@ import CountdownTimer from './Timer';
 
 const LockedWord = ({len}) => {
   let letters = new Array(len);
-  letters.fill(<div className="letter"> </div>)
+  for (let i = 0; i < len; i++) {
+    letters[i] = <div key={i} className="letter"> </div>
+  }
   return <div className = "game-word locked">
     {letters}
   </div>
@@ -24,12 +26,12 @@ const GameWordList = ({ wordCount, myWords, oppWords, revealedWords, gameStatus 
   let lockedNum = wordCount - unlockedNum;
   let opponentUnlocked = u.length;
 
-  let myWordDom = m.map((w) => <div className="game-word unlocked">
+  let myWordDom = m.map((w) => <div key={w} className="game-word unlocked">
     { w.split('').map((l) => <div className="letter">{l}</div>) }
   </div>)
   allWords.push(myWordDom);
 
-  let oppWordDom = u.map((w) => <div className= "game-word locked used">
+   let oppWordDom = u.map((w) => <div key={w} className= "game-word locked used">
     { w.split('').map((l) => <div className="letter">{l}</div>) }
   </div> );
   allWords.push(oppWordDom);
@@ -39,7 +41,9 @@ const GameWordList = ({ wordCount, myWords, oppWords, revealedWords, gameStatus 
   if (gameStatus === "PLAYING") {
     let lockedNumToShow = Math.min(roomLeft, lockedNum);
     let lockedWordDom = new Array(lockedNumToShow);
-    lockedWordDom.fill(<LockedWord len={wordLen} />)
+    for (let i = 0; i < lockedNumToShow; i++) {
+      lockedWordDom[i] = <LockedWord key={i} len={wordLen} />
+    }
     allWords.push(lockedWordDom);
   } else if (gameStatus === "COMPLETED" && revealedWords != null) {
     let revealedNumToShow = Math.min(roomLeft, lockedNum);

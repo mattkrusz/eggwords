@@ -17,7 +17,7 @@ const GameInputComponent = ({ letters, typed, gameStatus, onStartClick, onRestar
     return <div className="game-input">
         <div className="game-letters">
             {
-                letters.split('').map((r, idx) => <div className={gameLetterClass + (idx < gameLettersToSignal ? gameLetterAcceptClass : "")}>{r}</div>)
+                letters.split('').map((r, idx) => <div key={r + idx} className={gameLetterClass + (idx < gameLettersToSignal ? gameLetterAcceptClass : "")}>{r}</div>)
             }
         </div>
 
@@ -32,7 +32,7 @@ const GameInputComponent = ({ letters, typed, gameStatus, onStartClick, onRestar
         {gameStatus === 'PLAYING' &&
             <div className={"input-letters"}>
                 {
-                    typed.split('').map(t => <div className={inputLetterClass}>{t}</div>)
+                    typed.split('').map((t, idx) => <div key={t + idx} className={inputLetterClass}>{t}</div>)
                 }
             </div>
         }
