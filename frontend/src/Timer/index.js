@@ -58,7 +58,7 @@ class CountdownTimer extends Component {
 }
 
 CountdownTimer.propTypes = {
-    endTimestamp: PropTypes.instanceOf(Date),
+    endTimestamp: PropTypes.number,
     onComplete: PropTypes.func,
     gameStatus: PropTypes.string
 }
