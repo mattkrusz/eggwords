@@ -148,7 +148,7 @@ div {
 .game-word {
   display: flex;
   flex-direction: row;
-  margin: 0 1em 0 1em;
+  margin: .1em 1em;
 }
 
 .letter {
