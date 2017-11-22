@@ -161,9 +161,32 @@ document.addEventListener("keydown", (e) => {
 
 localStorage.debug = '*';
 
-reduxActionStream
-    .filter((action) => (action.type === Actions.WORD_RESPONSE))
-    .subscribe((a) => {
+// Use rxjs to "react" to game events outside of React.
+let wordResponseStream = reduxActionStream
+    .filter((action) => (action.type === Actions.WORD_RESPONSE));
+let gamestateUpdateStream = reduxActionStream
+    .filter((action) => (action.type === Actions.UPDATE_GAME_STATE));
+
+// The usedWords part of the state is an object mapping (usedWord -> playerId) where playerId is
+// the id of the player that used the word.
+let usedWordsStream = gamestateUpdateStream
+    .flatMap((action) => Rx.Observable.from(Object.entries(action.gameState.usedWords)))
+    .distinct((kv) => kv[0]);
+let myUsedWordsStream = usedWordsStream
+    .filter((kv) => kv[1] === playerId);
+let opponentUsedWordsStream = usedWordsStream
+    .filter((kv) => kv[1] !== playerId);
+
+myUsedWordsStream.subscribe((kv) => {
+    console.log(kv);
+});
+
+opponentUsedWordsStream.subscribe((kv) => {
+    console.log(kv);
+});
+
+// Sounds
+wordResponseStream.subscribe((a) => {
         // TODO - This should be a general system for hooking game events.
         if (a.result === 'REJECT') {
             let audio = document.getElementById("audio-reject-naw");
@@ -178,3 +201,6 @@ reduxActionStream
         }
     }
 );
+
+
+
