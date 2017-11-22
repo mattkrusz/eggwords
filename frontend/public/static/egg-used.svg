@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="283.46457" height="389.76376" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <title>blue egg</title>
+ <defs>
+  <filter x="-0.063193" width="1.126386" y="-0.398601" height="1.797203" id="filter3220">
+   <feGaussianBlur stdDeviation="8.724045" id="feGaussianBlur3222"/>
+  </filter>
+ </defs>
+ <metadata id="metadata7">image/svg+xmlEggCarlos AsmateggfoodanimalSimple egg.</metadata>
+ <g>
+  <title>Layer 1</title>
+  <g id="layer1">
+   <g id="g3619">
+    <path stroke="#000000" d="m247.62415,362.36471a105.892,16.78776 0 1 1 -211.78401,0a105.892,16.78776 0 1 1 211.78401,0z" id="path3319" filter="url(#filter3220)" stroke-dashoffset="0" stroke-miterlimit="4" stroke-linejoin="round" stroke-linecap="round" stroke-width="5" fill="#000000" opacity="0.255682"/>
+    <path id="path3323" d="m270.48412,225.5173c0,98.28969 -57.68082,141.53569 -128.75183,141.53569c-71.07102,0 -128.75184,-43.246 -128.75184,-141.53569c0,-98.28971 57.68082,-214.5864 128.75184,-214.5864c71.07101,0 128.75183,116.29669 128.75183,214.5864z" stroke-dashoffset="0" stroke-miterlimit="4" stroke-linejoin="round" stroke-linecap="round" stroke-width="0.639193" stroke="#000000" fill="#000000"/>
+    <path stroke="#000000" d="m270.48412,225.5173c0,98.28969 -57.68082,141.53569 -128.75183,141.53569c-71.07102,0 -128.75184,-43.246 -128.75184,-141.53569c0,-98.28971 57.68082,-214.5864 128.75184,-214.5864c71.07101,0 128.75183,116.29669 128.75183,214.5864z" id="path3325" stroke-dashoffset="0" stroke-miterlimit="4" stroke-linejoin="round" stroke-linecap="round" stroke-width="5" fill="#000000" opacity="0.505682"/>
+   </g>
+  </g>
+ </g>
+</svg>

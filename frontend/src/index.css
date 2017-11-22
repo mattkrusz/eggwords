@@ -159,19 +159,28 @@ div {
 }
 
 .unlocked .letter {
-  color: #27ba2a;
-  ;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 25;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 1.2em;
+    height: 1.5em;
+    background: #ffe54d;
+    border: 4px solid #F5F5F5;
 }
 
 .locked .letter {
-  background-image: url("/static/skull.svg");
+  background-image: url("/static/egg.svg");
   background-size: contain;
   background-repeat: no-repeat;
-  color: #4101ff;
+  background-position: center;
+  color: #9c9898;
 }
 
 .locked.used .letter {
-  background-image: url("/static/skull-used.svg");
+  background-image: url("/static/egg-used.svg");
   background-size: contain;
   background-repeat: no-repeat;
 }
