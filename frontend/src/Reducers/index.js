@@ -27,16 +27,7 @@ function game (
 	},
     action
   ) {
-    switch (action.type) {
-      case ActionTypes.TICK:
-        let d = Date.parse(state.endTime);
-        let n = Date.now();
-        let s = (d - n) / 1000;
-        s = parseInt(s);
-        return Object.assign({}, state, {
-            timeRemaining: s
-        });        
-        break;
+    switch (action.type) {      
       case ActionTypes.NEW_GAME:        
       case ActionTypes.JOIN_GAME:
         return Object.assign({}, state, {
@@ -44,7 +35,14 @@ function game (
         });
         break;
       case ActionTypes.UPDATE_GAME_STATE:
-        return Object.assign({}, state, action.gameState);
+        let newState = { 
+            ...state, 
+            ...action.gameState
+        };
+        if (action.gameState.endTime != null) {
+            newState.endTimestamp = Date.parse(action.gameState.endTime)
+        }
+        return newState;
         break;
       case ActionTypes.UPDATE_PLAYER_INFO:
         return Object.assign({}, state, {

@@ -19,8 +19,7 @@ let storage = window.localStorage;
 
 let reduxActionStream = new Rx.Subject();
 const rxMiddleware = store => next => action => {
-    if (action.type != 'TICK' 
-        && action.type != 'ENTER_LETTER' 
+    if (action.type != 'ENTER_LETTER' 
         && action.type != 'REJECT_LETTER') {
         reduxActionStream.next(action);
     }
@@ -29,7 +28,7 @@ const rxMiddleware = store => next => action => {
 
 const loggerMiddleware = createLogger({
     predicate: (getState, action) => {
-        return action.type != 'TICK';
+        return true;
     }
 });
 const store = createStore(
@@ -91,7 +90,7 @@ const mapStateToProps = state => {
         myWords: state.requests.acceptedWords.map((aw) => aw.word),
         oppWords: oppWords,
         wordCount: state.game.wordCount || [],
-        timeRemaining: state.game.timeRemaining,
+        endTimestamp: state.game.endTimestamp,       
         myPlayerId: playerId,
         players: players,
         maxScore: 10000,
@@ -160,11 +159,6 @@ document.addEventListener("keydown", (e) => {
     }    
 });
 
-function tick() {
-    store.dispatch(actionFactory.tick());
-    setTimeout(tick, 400);
-}
-tick();
 localStorage.debug = '*';
 
 reduxActionStream

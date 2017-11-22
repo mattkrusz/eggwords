@@ -6,7 +6,10 @@ import { linkTo } from '@storybook/addon-links';
 
 import Game from '../GameComponent';
 import GameInput from '../GameInputComponent';
+import CountdownTimer from '../Timer';
 import '../index.css';
+
+let endTime = new Date((new Date()).getTime() + 119554);
 
 storiesOf('Game', module)
   .add('Basic', () => <Game 
@@ -15,7 +18,7 @@ storiesOf('Game', module)
     wordCount={[0,0,0,28,37,13,5,3]}
     letters={'enca'}
     typed={'hid'}
-    timeRemaining={85}
+    endTime={endTime}
     myPlayerId={'70b0e89e-760b-4576-912b-590c03c174d0'}
     players={[{
         playerId: '70b0e89e-760b-4576-912b-590c03c174d0',
@@ -35,7 +38,7 @@ storiesOf('Game', module)
     wordCount={[]}
     letters={'ndcehai'}
     typed={'chide'}
-    timeRemaining={85} */
+    endTime={endTime} */
     myPlayerId={'70b0e89e-760b-4576-912b-590c03c174d0'}
     players={[{
       playerId: '70b0e89e-760b-4576-912b-590c03c174d0',
@@ -56,7 +59,7 @@ storiesOf('Game', module)
     wordCount={[0, 0, 0, 28, 37, 13, 5, 3]}
     letters={'enca'}
     typed={'hid'}
-    timeRemaining={0}
+    endTime={new Date()}
     myPlayerId={'70b0e89e-760b-4576-912b-590c03c174d0'}
     players={[{
       playerId: '70b0e89e-760b-4576-912b-590c03c174d0',
@@ -87,4 +90,7 @@ storiesOf('Game', module)
     onRestartClick={() => { }}
     inputStatus={1}
     notifyAccept={true}
-    lastAccepted={'spider'} />)    
+    lastAccepted={'spider'} />)     
+  .add('CustomCountdown', () => <CountdownTimer 
+    endTime={new Date((new Date()).getTime() + 119554)}
+    gameStatus={"PLAYING"} />)    

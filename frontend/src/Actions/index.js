@@ -16,7 +16,6 @@ export const SHUFFLE_LETTERS = 'SHUFFLE_LETTERS';
 export const REVEAL_WORDS = 'REVEAL_WORDS';
 export const REQUEST_CHANGE_NAME = 'REQUEST_CHANGE_NAME';
 export const UPDATE_PLAYER_INFO = 'UPDATE_PLAYER_INFO';
-export const TICK = 'TICK';
 
 export const REJECT_REASON = {
     NOT_A_WORD: 'NOT_A_WORD',
@@ -29,12 +28,6 @@ export const REJECT_REASON = {
 export class ActionFactory {
     constructor(gameClient) {
         this.gameClient = gameClient;        
-    }
-
-    tick(timeLeft) {
-        return {
-            type: TICK
-        }
     }
 
     newGame(gameId, playerId) {

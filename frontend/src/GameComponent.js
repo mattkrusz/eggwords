@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { RIEToggle, RIEInput, RIETextArea, RIENumber, RIETags, RIESelect } from 'riek';
 import GameInputComponent from './GameInputComponent';
+import CountdownTimer from './Timer';
 
 const LockedWord = ({len}) => {
   let letters = new Array(len);
@@ -75,21 +76,7 @@ let trim = (s, len = 15) => {
 
 }
 
-const GameTimer = ({secondsRemaining, gameStatus}) => {
-  if (gameStatus === "WAITING") {
-    return <div className="timer-container">
-      <span className="countdown-time">{"Waiting to start ..."}</span>
-    </div>    
-  } else {
-    let timeToShow = "";
-    if (typeof secondsRemaining == 'number' && !isNaN(secondsRemaining)) {
-      timeToShow = secondsRemaining > 0 ? secondsRemaining : 0;
-    }
-    return <div className="timer-container">
-      <span className="countdown-time">{timeToShow}</span>
-    </div>
-  }
-}
+
 
 class RieWrapper extends React.Component {
 
@@ -136,15 +123,15 @@ const GameScoreList = ({playerList, myPlayerId, maxScore, onNameChange}) => {
   return <div className="score-list">{scoreList}</div>
 }
 
-const GameTopArea = ({ secondsRemaining, playerList, myPlayerId, maxScore, gameStatus, onNameChange}) => {
+const GameTopArea = ({ endTimestamp, playerList, myPlayerId, maxScore, gameStatus, onNameChange}) => {
   return <div className="game-top"> 
-    <GameTimer secondsRemaining={secondsRemaining} gameStatus={gameStatus}/>
+    <CountdownTimer endTimestamp={endTimestamp} gameStatus={gameStatus} />
     <GameScoreList playerList={playerList} myPlayerId={myPlayerId} maxScore={maxScore} onNameChange={onNameChange}/>
   </div>
 }
 
 const Game = ({letters, typed, myWords, oppWords, wordCount,
-  timeRemaining, players, myPlayerId, gameStatus, onStartClick, 
+  endTimestamp, players, myPlayerId, gameStatus, onStartClick, 
   onRestartClick, onNameChange, maxScore, revealedWords,
   notifyAccept, notifyReject, lastAccepted, lastRejected}) => {
   
@@ -154,7 +141,7 @@ const Game = ({letters, typed, myWords, oppWords, wordCount,
 
   return (
     <div className="eggwords">      
-      <GameTopArea secondsRemaining={timeRemaining} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus} onNameChange={onNameChange}/>
+      <GameTopArea endTimestamp={endTimestamp} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus} onNameChange={onNameChange}/>
       <GameInputComponent letters={letters} typed={typed} gameStatus={gameStatus} 
         notifyAccept={notifyAccept} notifyReject={notifyReject} lastAccepted={lastAccepted}
         onStartClick={onStartClick} onRestartClick={onRestartClick}/>
