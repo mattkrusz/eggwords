@@ -13,24 +13,22 @@ import thunkMiddleware from 'redux-thunk';
 import { createLogger } from 'redux-logger';
 import GameClient from './Client';
 import EventAdapter from './Client/adapter';
+import RxActionMiddleware from './RxActionMiddleware';
 
 let storage = window.localStorage;
-        
 
-let reduxActionStream = new Rx.Subject();
-const rxMiddleware = store => next => action => {
-    if (action.type != 'ENTER_LETTER' 
-        && action.type != 'REJECT_LETTER') {
-        reduxActionStream.next(action);
-    }
-    return next(action)
-}
+/*
+  Set up redux middleware and then create the redux store.
+*/
+const rxMiddleware = RxActionMiddleware();
+let reduxActionStream = rxMiddleware.observable;
 
 const loggerMiddleware = createLogger({
     predicate: (getState, action) => {
         return true;
     }
 });
+
 const store = createStore(
     rootReducer,
     applyMiddleware(
