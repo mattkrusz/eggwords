@@ -127,8 +127,6 @@ ReactDOM.render(
     </Provider>
 , document.getElementById('root'));
 
-registerServiceWorker();
-
 document.addEventListener("keydown", (e) => {
     if(e.target.tagName === 'BODY' 
         && !e.metaKey
