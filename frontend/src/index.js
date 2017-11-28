@@ -13,7 +13,7 @@ import thunkMiddleware from 'redux-thunk';
 import { createLogger } from 'redux-logger';
 import GameClient from './Client';
 import EventAdapter from './Client/adapter';
-import RxActionMiddleware from './RxActionMiddleware';
+import RxActionMiddleware from './ReduxMiddleware/RxActionMiddleware';
 
 let storage = window.localStorage;
 
