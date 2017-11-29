@@ -82,7 +82,9 @@ class GameKeyIndex:
         'game_letters_key': '{game_key}:letters',
         'game_created_key': '{game_key}:created',
         'game_start_key': '{game_key}:start',
+        'game_start_timestamp_key': '{game_key}:start_timestamp',
         'game_end_key': '{game_key}:end',
+        'game_end_timestamp_key': '{game_key}:end_timestamp',
         'game_players_key': '{game_key}:players',
         'game_word_count_key': '{game_key}:wordcount',
         'word_set_key': '{game_key}:words',
@@ -115,8 +117,14 @@ class GameKeyIndex:
     def game_start_key(self):
         return self.__key__('game_start_key')
 
+    def game_start_timestamp_key(self):
+        return self.__key__('game_start_timestamp_key')
+
     def game_end_key(self):
         return self.__key__('game_end_key')
+
+    def game_end_timestamp_key(self):
+        return self.__key__('game_end_timestamp_key')
 
     def game_players_key(self):
         return self.__key__('game_players_key')
@@ -190,7 +198,9 @@ def start_game(game_id, words, countdown = 0, length = 90):
     start_time = timezone.now() + timedelta(seconds=countdown)
     end_time = start_time + timedelta(seconds=length)
     pipe.set(keys.game_start_key(), start_time.isoformat())
+    pipe.set(keys.game_start_timestamp_key(), int(start_time.timestamp()))
     pipe.set(keys.game_end_key(), end_time.isoformat())
+    pipe.set(keys.game_end_timestamp_key(), int(end_time.timestamp()))
     pipe.rpush(keys.game_wc_key(), *word_count_arr)
     pipe.execute()
 
@@ -260,17 +270,38 @@ def get_game_status(game_id):
     end = res[1]
     return __derive_game_status__(start, end)
 
+lua_script = '''
+    local stime = redis.call('GET', KEYS[3])
+    local etime = redis.call('GET', KEYS[4])
+    local nowtime = tonumber(ARGV[3])
+
+    if not stime or not etime then return 0 end
+    if nowtime < tonumber(stime) then return 0 end
+    if nowtime >= tonumber(etime) then return 0 end
+
+    local nrem = redis.call('SREM', KEYS[1], ARGV[1])
+    if nrem > 0 then 
+        redis.call('HSET', KEYS[2], ARGV[1], ARGV[2])
+        return nrem
+    else return nrem
+    end
+'''
+test_and_use_word = r.register_script(lua_script)
+
+
 def use_word(game_id, player_id, word):
     keys = GameKeyIndex(game_id)
-    game_status = get_game_status(game_id)
-    if game_status == GameStatus.PLAYING:        
-        success = r.srem(keys.word_set_key(), word)    
-        if success:
-            r.hset(keys.used_words_set_key(), normalize_word(word), str(player_id))
-            return True
-        else:
-            return False    
-    else:
+    res = test_and_use_word(
+        keys=[keys.word_set_key(),
+              keys.used_words_set_key(),
+              keys.game_start_timestamp_key(),
+              keys.game_end_timestamp_key()
+              ],
+        args=[word, str(player_id), int(timezone.now().timestamp())])
+    
+    if res == 1:
+        return True
+    else: 
         return False
 
 def end_game(game_id):
