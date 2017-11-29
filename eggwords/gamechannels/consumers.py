@@ -129,17 +129,19 @@ def ws_start_game(message):
 def ws_end_game(message):
     game_id = message['gameId']
     group_name = game_group_name(game_id)
-    if game_service.get_game_status(game_id) == GameStatus.COMPLETED:
+    game_state = game_service.get_game_state(game_id)
+    attempt_num = message.get('attempt_num', 0)
+    if game_state.status() == GameStatus.COMPLETED:
         send_game_state(game_id)
         reveal_words(game_id)
         game_service.set_expiry(game_id, 120)
-    else:
+    elif attempt_num < 9:
         delayed_message = {
             'channel': 'game.end',
-            'content': {'gameId': game_id},
+            'content': {'gameId': game_id, 'attempt_num': attempt_num + 1},
             'delay': 1 * 1000
         }
-        Channel('asgi.delay').send(delayed_message, immediately=True)       
+        Channel('asgi.delay').send(delayed_message)
  
 
 def ws_submit_word(message):
