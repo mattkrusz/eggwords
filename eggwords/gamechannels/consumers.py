@@ -132,6 +132,7 @@ def ws_end_game(message):
     if game_service.get_game_status(game_id) == GameStatus.COMPLETED:
         send_game_state(game_id)
         reveal_words(game_id)
+        game_service.set_expiry(game_id, 120)
     else:
         delayed_message = {
             'channel': 'game.end',
