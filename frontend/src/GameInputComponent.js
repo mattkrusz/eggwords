@@ -1,7 +1,7 @@
 
 import React, { Component } from 'react';
 
-const GameInputComponent = ({ letters, typed, gameStatus, onStartClick, onRestartClick, notifyAccept, notifyReject, lastAccepted }) => {
+const GameInputComponent = ({ letters, typed, gameStatus, onStartClick, notifyAccept, notifyReject, lastAccepted }) => {
     
     let gameLetterClass = "game-letter";
     let gameLetterAcceptClass = " accept";
@@ -35,11 +35,6 @@ const GameInputComponent = ({ letters, typed, gameStatus, onStartClick, onRestar
                     typed.split('').map((t, idx) => <div key={t + idx} className={inputLetterClass}>{t}</div>)
                 }
             </div>
-        }
-
-        {gameStatus === 'COMPLETED' &&
-            <div className="gameover"><h1>Game Over!</h1><button id="restartbutton" onClick={onRestartClick}>New Game</button></div>
-
         }
     </div>
 

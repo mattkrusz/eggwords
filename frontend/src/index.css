@@ -271,12 +271,12 @@ div {
 
 .gameover {
   display: flex;
-  flex-direction: row;
+  font-size: 2em;
+  flex-direction: column;
   align-items: center;
   justify-content: space-between;
 }
 
-.gameover h1 {
-  font-size: 1em;
-  margin-right: 1em;
+.gameover h1.victory {
+  color: gold;
 }
