@@ -182,15 +182,25 @@ opponentUsedWordsStream.subscribe((kv) => {
 });
 
 // Sounds
+// TODO - This should be a general system for hooking game events.
 wordResponseStream.subscribe((a) => {
-        // TODO - This should be a general system for hooking game events.
         if (a.result === 'REJECT') {
-            let audio = document.getElementById("audio-reject-naw");
-            audio.pause();
-            audio.currentTime = 0;
-            audio.play();
+            if (a.rejectReason === Actions.REJECT_REASON.NOT_A_WORD) {
+                let audio = document.getElementById("audio-reject-naw");
+                audio.pause();
+                audio.currentTime = 0;
+                audio.play();
+            } else if (a.rejectReason === Actions.REJECT_REASON.WORD_USED) {
+                let audio = document.getElementById("audio-reject-used");
+                audio.pause();
+                audio.currentTime = 0;
+                audio.play();
+            }
         } else {
             let audio = document.getElementById("audio-accept");
+            if (a.word.length == 7) {
+                audio = document.getElementById("audio-accept-big");
+            }           
             audio.pause();
             audio.currentTime = 0;
             audio.play();  
@@ -198,10 +208,29 @@ wordResponseStream.subscribe((a) => {
     }
 );
 
+opponentUsedWordsStream.throttleTime(500).subscribe((ouw) => {
+    let audio = document.getElementById("audio-opp-word");
+    audio.pause();
+    audio.currentTime = 0;
+    audio.play();  
+});
+
 let gameResultStream = gamestateUpdateStream
     .filter((action) => (action.type === Actions.UPDATE_GAME_STATE))
     .filter((action) => (action.gameState.gameStatus === "COMPLETED"))
     .distinct((action) => action.gameState.endTime);
 
+let gameStartStream = gamestateUpdateStream
+    .filter((action) => (action.type === Actions.UPDATE_GAME_STATE))
+    .filter((action) => (action.gameState.gameStatus === "PLAYING"))
+    .distinct((action) => action.gameState.startTime);
 
+gameResultStream.subscribe((a) => {
+});
 
+gameStartStream.subscribe((a) => {
+    let audio = document.getElementById("game-start");
+    audio.pause();
+    audio.currentTime = 0;
+    audio.play();
+});
