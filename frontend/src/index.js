@@ -182,37 +182,32 @@ opponentUsedWordsStream.subscribe((kv) => {
 });
 
 // Sounds
-// TODO - This should be a general system for hooking game events.
+function playAudioById(id) {
+    let audio = document.getElementById(id);
+    audio.pause();
+    audio.currentTime = 0;
+    audio.play();
+}
+
 wordResponseStream.subscribe((a) => {
         if (a.result === 'REJECT') {
             if (a.rejectReason === Actions.REJECT_REASON.NOT_A_WORD) {
-                let audio = document.getElementById("audio-reject-naw");
-                audio.pause();
-                audio.currentTime = 0;
-                audio.play();
+                playAudioById("audio-reject-naw");
             } else if (a.rejectReason === Actions.REJECT_REASON.WORD_USED) {
-                let audio = document.getElementById("audio-reject-used");
-                audio.pause();
-                audio.currentTime = 0;
-                audio.play();
+                playAudioById("audio-reject-used");
             }
         } else {
-            let audio = document.getElementById("audio-accept");
             if (a.word.length == 7) {
-                audio = document.getElementById("audio-accept-big");
-            }           
-            audio.pause();
-            audio.currentTime = 0;
-            audio.play();  
+                playAudioById("audio-accept-big");
+            } else {
+                playAudioById('audio-accept');
+            }
         }
     }
 );
 
 opponentUsedWordsStream.throttleTime(500).subscribe((ouw) => {
-    let audio = document.getElementById("audio-opp-word");
-    audio.pause();
-    audio.currentTime = 0;
-    audio.play();  
+    playAudioById("audio-opp-word");
 });
 
 let gameResultStream = gamestateUpdateStream
@@ -226,11 +221,19 @@ let gameStartStream = gamestateUpdateStream
     .distinct((action) => action.gameState.startTime);
 
 gameResultStream.subscribe((a) => {
+    let scoreById = a.gameState.score;
+    let topScore = Math.max(...Object.values(scoreById));
+    let playerWon = scoreById[playerId] === topScore;
+    let multiplayer = Object.keys(scoreById).length > 1;
+    if (multiplayer && playerWon) {
+        playAudioById('audio-victory');
+    } else  if (multiplayer) {
+        playAudioById("audio-defeat");
+    } else {
+        playAudioById("audio-sour-victory");
+    }
 });
 
 gameStartStream.subscribe((a) => {
-    let audio = document.getElementById("game-start");
-    audio.pause();
-    audio.currentTime = 0;
-    audio.play();
+    playAudioById("audio-game-start");
 });

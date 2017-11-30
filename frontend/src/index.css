@@ -277,6 +277,10 @@ div {
   justify-content: space-between;
 }
 
+.gameover h1 {
+  margin: .25em;
+}
+
 .gameover h1.victory {
   color: gold;
 }
