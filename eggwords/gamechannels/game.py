@@ -173,6 +173,13 @@ def add_player(game_id, player_id):
     pipe.execute()
     return game_id
 
+def remove_player(game_id, player_id):
+    pipe = r.pipeline()
+    keys = GameKeyIndex(game_id)
+    pipe.hdel(keys.game_players_key(), str(player_id))
+    pipe.execute()
+    return game_id
+
 def start_game(game_id, words, countdown = 0, length = 90):    
     if get_game_status(game_id) not in [GameStatus.WAITING, GameStatus.SCHEDULED]:
         return False
