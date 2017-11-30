@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { RIEToggle, RIEInput, RIETextArea, RIENumber, RIETags, RIESelect } from 'riek';
 import GameInputComponent from './GameInputComponent';
+import GameOverComponent from './GameOverComponent';
 import CountdownTimer from './Timer';
 
 const LockedWord = ({len}) => {
@@ -143,12 +144,19 @@ const Game = ({letters, typed, myWords, oppWords, wordCount,
     return <li key={w}>{w}</li>
   })
 
+  let middleComponent = undefined;
+  if (gameStatus === 'COMPLETED') {
+    middleComponent = <GameOverComponent gameStatus={gameStatus} onRestartClick={onRestartClick} myPlayerId={myPlayerId} playerList={players} />
+  } else {
+    middleComponent = <GameInputComponent letters={letters} typed={typed} gameStatus={gameStatus}
+      notifyAccept={notifyAccept} notifyReject={notifyReject} lastAccepted={lastAccepted}
+      onStartClick={onStartClick} />
+  }
+
   return (
     <div className="eggwords">      
       <GameTopArea endTimestamp={endTimestamp} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus} onNameChange={onNameChange}/>
-      <GameInputComponent letters={letters} typed={typed} gameStatus={gameStatus} 
-        notifyAccept={notifyAccept} notifyReject={notifyReject} lastAccepted={lastAccepted}
-        onStartClick={onStartClick} onRestartClick={onRestartClick}/>
+      { middleComponent }
       <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} revealedWords={revealedWords} gameStatus={gameStatus}/>
     </div>
   )

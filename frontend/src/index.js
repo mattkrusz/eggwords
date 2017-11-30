@@ -198,5 +198,10 @@ wordResponseStream.subscribe((a) => {
     }
 );
 
+let gameResultStream = gamestateUpdateStream
+    .filter((action) => (action.type === Actions.UPDATE_GAME_STATE))
+    .filter((action) => (action.gameState.gameStatus === "COMPLETED"))
+    .distinct((action) => action.gameState.endTime);
+
 
 
