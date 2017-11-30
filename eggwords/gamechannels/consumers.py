@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from channels.handler import AsgiHandler
 from channels import Group, Channel
+from channels.sessions import channel_session
 from gamechannels.word_lists import word_lists
 import gamechannels.game as game_service
 from gamechannels.game import GameStatus
@@ -22,6 +23,8 @@ def ws_receive(message):
     payload['reply_channel'] = message.content['reply_channel']
     Channel("game.receive").send(payload)
 
+
+@channel_session
 def ws_newgame(message):
     game_id = uuid.uuid4()
     player_id = message.get("playerId")
@@ -37,6 +40,8 @@ def ws_newgame(message):
     })
     
     message.reply_channel.send({"accept": True, "text":response})
+    message.channel_session["gameId"] = str(game_id)
+    message.channel_session["playerId"] = str(player_id)
     send_game_state(game_id)
     
     expiry = {
@@ -45,7 +50,7 @@ def ws_newgame(message):
     }
     Channel('game.expire').send(expiry)
     
-
+@channel_session
 def ws_joingame(message):
     game_id = message['gameId']
     group_name = game_group_name(game_id)    
@@ -54,6 +59,8 @@ def ws_joingame(message):
         player_id = uuid.uuid4()
     Group(group_name).add(message['reply_channel'])    
     game_service.add_player(game_id, player_id)
+    message.channel_session["gameId"] = str(game_id)
+    message.channel_session["playerId"] = str(player_id)
     
     response = json.dumps({
         'type': 'JoinGameResponse',
@@ -194,7 +201,14 @@ def ws_change_name(message):
     }
     Group(group_name).send({'text': json.dumps(response)})
 
-# Connected to websocket.disconnect
+@channel_session
 def ws_disconnect(message):
-    print("ws_disconnect")
-    Group("chat").discard(message.reply_channel)
+    game_id = message.channel_session["gameId"]
+    player_id = message.channel_session["playerId"]
+    print("discon")
+    print(game_id)
+    print(player_id)
+    group_name = game_group_name(game_id)
+    Group(group_name).discard(message.reply_channel)
+    game_service.remove_player(game_id, player_id)
+    
