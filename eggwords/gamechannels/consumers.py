@@ -5,11 +5,15 @@ from channels.sessions import channel_session
 from gamechannels.word_lists import word_lists
 import gamechannels.game as game_service
 from gamechannels.game import GameStatus
+from gamechannels.gamealias import create_game_alias, dealias_game
 import uuid
 import json
 import random
 
 DEFAULT_GAME_LENGTH = 120
+
+import re
+re_uuid4 = re.compile('[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}')
 
 def game_group_name(game_id):
     return 'game-' + str(game_id)
@@ -33,9 +37,11 @@ def ws_newgame(message):
     group_name = game_group_name(game_id)
     Group(group_name).add(message.reply_channel)
     game_service.init_game(game_id, [player_id])
+    alias = create_game_alias(game_id)
     response = json.dumps({
         'type': 'NewGameResponse',
-        'gameId': str(game_id), 
+        'gameId': str(game_id),
+        'alias': str(alias),
         'playerId': str(player_id)
     })
     
@@ -53,6 +59,11 @@ def ws_newgame(message):
 @channel_session
 def ws_joingame(message):
     game_id = message['gameId']
+    alias = None
+    if not re_uuid4.match(game_id):
+        alias = game_id
+        game_id = dealias_game(game_id)
+        # TODO: if it doesn't exist ...
     group_name = game_group_name(game_id)    
     player_id = message.get("playerId")
     if not player_id:
@@ -64,7 +75,8 @@ def ws_joingame(message):
     
     response = json.dumps({
         'type': 'JoinGameResponse',
-        'gameId': message['gameId'], 
+        'gameId': game_id,
+        'alias': alias,
         'playerId': str(player_id)
     })
 
