@@ -1,7 +1,9 @@
 import uuid, json, random, re
+from functools import wraps
 
 from django.http import HttpResponse
 from channels.handler import AsgiHandler
+from channels.message import Message
 from channels import Group, Channel
 from channels.sessions import channel_session
 
@@ -19,6 +21,16 @@ re_uuid4 = re.compile('[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-
 def game_group_name(game_id):
     return 'game-' + str(game_id)    
 
+def decode_json_message(func):
+    @wraps(func)
+    def wrapped(*args, **kwargs):     
+        msg = args[0]              
+        decoded_json = json.loads(msg.get('text'))
+        new_content = { **msg.content, **decoded_json }
+        processed_msg = Message(new_content, msg.channel.name, msg.channel_layer)
+        return func(processed_msg, **kwargs)
+    return wrapped
+        
 # Manage connecting / disconnecting via websocket
 
 def ws_connect(message):
@@ -34,14 +46,14 @@ def ws_disconnect(message):
         if player_id:
             game_manager.remove_player(game_id, player_id)
 
-# General routing of game messages. This could probably be removed and speed things up.
+# Route game messages.
 
-def ws_gamereceive(message):
-    payload = json.loads(message['text'])
-    payload['reply_channel'] = message.content['reply_channel']
-    Channel("game.receive").send(payload)
+@decode_json_message
+def ws_dispatch_game_message(msg):    
+    fn = dispatch.get(msg.get('type', 'unknown'), gamerecv_unknown_type)
+    return fn(msg)
 
-# Consumers that handle the game messages.
+# Consume game messages.
 
 @channel_session
 def gamerecv_newgame(message):
@@ -205,6 +217,9 @@ def gamerecv_change_name(message):
     }
     Group(group_name).send({'text': json.dumps(response)})
 
+def gamerecv_unknown_type(message):
+    pass
+
 # Re-usable convenience methods that send game data as websocket messages to the game's players.
 
 def send_game_state(game_id, game_state=None):
@@ -230,3 +245,13 @@ def send_reveal_words(game_id):
     })
     Group(group_name).send({'text': response})
     
+# Dict for dispatching game messages to consumers.
+
+dispatch = {
+    "create_game": gamerecv_newgame,
+   	"join_game": gamerecv_joingame,
+   	"reinit_game": gamerecv_reinitgame,
+   	"submit_word": gamerecv_submit_word,
+   	"start_game": gamerecv_start_game,
+   	"change_name": gamerecv_change_name,
+}
