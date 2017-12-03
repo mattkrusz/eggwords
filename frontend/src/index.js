@@ -59,7 +59,12 @@ gc.onJoinGame().subscribe((e) => {
     gameId = e.action.gameId;
     playerId = e.action.playerId;
     storage.setItem("playerId", playerId)
-    window.history.pushState(null, null, '#' + gameId);
+    if (e.action.alias != undefined) {
+        window.history.pushState(null, null, '#' + e.action.alias);
+    } else {
+        window.history.pushState(null, null, '#' + gameId);
+    }
+    
     if (playerName != null) {
         store.dispatch(actionFactory.requestChangeName(gameId, playerId, playerName));
     }
