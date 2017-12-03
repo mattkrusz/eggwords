@@ -1,12 +1,13 @@
-import redis
-import json
-import uuid
-import random, collections
+import json, uuid, random, collections
 from datetime import datetime, timedelta
-from gamechannels.score import score_game
+from enum import Enum
+
 import dateutil.parser
 from django.utils import timezone
-from enum import Enum
+
+
+from gamechannels.redismgr import redis_connection
+from gamechannels.score import score_game
 
 class GameStatus(Enum):
     WAITING   = 0
@@ -14,7 +15,7 @@ class GameStatus(Enum):
     PLAYING   = 2
     COMPLETED = 3
 
-r = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
+r = redis_connection()
 
 def normalize_word(w):
     return w.strip().lower()
