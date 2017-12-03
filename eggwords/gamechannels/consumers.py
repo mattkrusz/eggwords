@@ -1,26 +1,33 @@
+import uuid, json, random, re
+
 from django.http import HttpResponse
 from channels.handler import AsgiHandler
 from channels import Group, Channel
 from channels.sessions import channel_session
+
 from gamechannels.word_lists import word_lists
-import gamechannels.game as game_service
+import gamechannels.gamemgr as gamemgr
 from gamechannels.game import GameStatus
 from gamechannels.gamealias import create_game_alias, dealias_game
-import uuid
-import json
-import random
 
 DEFAULT_GAME_LENGTH = 120
 
-import re
+game_manager = gamemgr.RedisGameManager()
+
 re_uuid4 = re.compile('[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}')
 
 def game_group_name(game_id):
-    return 'game-' + str(game_id)
+    return 'game-' + str(game_id)    
 
-def ws_connect(message):
-    print("ws_connect")
-    message.reply_channel.send({"accept": True})
+@channel_session
+def ws_disconnect(message):
+    game_id = message.channel_session.get("gameId")
+    player_id = message.channel_session.get("playerId")
+    if game_id:
+        group_name = game_group_name(game_id)
+        Group(group_name).discard(message.reply_channel)
+        if player_id:
+            game_manager.remove_player(game_id, player_id)
 
 def ws_receive(message):
     payload = json.loads(message['text'])
@@ -36,7 +43,7 @@ def ws_newgame(message):
         player_id = uuid.uuid4()
     group_name = game_group_name(game_id)
     Group(group_name).add(message.reply_channel)
-    game_service.init_game(game_id, [player_id])
+    game_manager.init_game(game_id, [player_id])
     alias = create_game_alias(game_id)
     response = json.dumps({
         'type': 'NewGameResponse',
@@ -69,7 +76,7 @@ def ws_joingame(message):
     if not player_id:
         player_id = uuid.uuid4()
     Group(group_name).add(message['reply_channel'])    
-    game_service.add_player(game_id, player_id)
+    game_manager.add_player(game_id, player_id)
     message.channel_session["gameId"] = str(game_id)
     message.channel_session["playerId"] = str(player_id)
     
@@ -93,7 +100,7 @@ def ws_reinitgame(message):
     game_id = message['gameId']
     group_name = game_group_name(game_id)    
     
-    game_service.reinit_game(game_id)
+    game_manager.reinit_game(game_id)
     
     response = json.dumps({
         'type': 'ReinitGameResponse',
@@ -114,7 +121,7 @@ def send_game_state(game_id, game_state=None):
     group_name = game_group_name(game_id)
 
     if game_state is None:
-        game_state = game_service.get_game_state(game_id)
+        game_state = game_manager.get_game_state(game_id)
 
     game_state_resp = {
         'type': 'GameState',
@@ -127,7 +134,7 @@ def ws_start_game(message):
     game_id = message['gameId']
     words = random.choice(word_lists)
     game_seconds = DEFAULT_GAME_LENGTH
-    did_start = game_service.start_game(game_id, words, length = game_seconds)    
+    did_start = game_manager.start_game(game_id, words, length = game_seconds)    
 
     if did_start:
         delayed_message = {
@@ -148,12 +155,12 @@ def ws_start_game(message):
 def ws_end_game(message):
     game_id = message['gameId']
     group_name = game_group_name(game_id)
-    game_state = game_service.get_game_state(game_id)
+    game_state = game_manager.get_game_state(game_id)
     attempt_num = message.get('attempt_num', 0)
     if game_state.status() == GameStatus.COMPLETED:
         send_game_state(game_id)
         reveal_words(game_id)
-        game_service.set_expiry(game_id, 120)
+        game_manager.set_expiry(game_id, 120)
     elif attempt_num < 9:
         delayed_message = {
             'channel': 'game.end',
@@ -169,7 +176,7 @@ def ws_submit_word(message):
     player_id = message['playerId']    
     word = message['word']
     print("ws_submit_word", word)
-    result = game_service.use_word(game_id, player_id, word)
+    result = game_manager.use_word(game_id, player_id, word)
 
     response = json.dumps({
         'type': 'SendWordResponse',
@@ -186,11 +193,11 @@ def ws_submit_word(message):
 def ws_expire_game(message):
     game_id = message['gameId']
     expire_after_seconds =  message.get('expire_after_seconds', 120)
-    game_service.set_expiry(game_id, expire_after_seconds)
+    game_manager.set_expiry(game_id, expire_after_seconds)
 
 def reveal_words(game_id):
     group_name = game_group_name(game_id)
-    game_words = game_service.get_game_words(game_id)
+    game_words = game_manager.get_game_words(game_id)
     response = json.dumps({
         'type': 'RevealWords',
         'gameId': game_id,
@@ -203,7 +210,7 @@ def ws_change_name(message):
     group_name = game_group_name(game_id)
     player_id = message['playerId']
     name = message['name']
-    game_service.update_player_name(game_id, player_id, name)
+    game_manager.update_player_name(game_id, player_id, name)
     response = {
         'type': 'PlayerInfoUpdate',
         'gameId': game_id,
@@ -213,14 +220,5 @@ def ws_change_name(message):
     }
     Group(group_name).send({'text': json.dumps(response)})
 
-@channel_session
-def ws_disconnect(message):
-    game_id = message.channel_session["gameId"]
-    player_id = message.channel_session["playerId"]
-    print("discon")
-    print(game_id)
-    print(player_id)
-    group_name = game_group_name(game_id)
-    Group(group_name).discard(message.reply_channel)
-    game_service.remove_player(game_id, player_id)
+
     
