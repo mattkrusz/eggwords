@@ -22,6 +22,11 @@ def game_group_name(game_id):
     return 'game-' + str(game_id)    
 
 def decode_json_message(func):
+    '''
+    Decorator for Django Channels consumer methods that decodes the message text as json.
+    
+    Also takes all the attributes of that json and raises them to be attributes on the message's content dict. 
+    '''
     @wraps(func)
     def wrapped(*args, **kwargs):     
         msg = args[0]              
@@ -34,10 +39,18 @@ def decode_json_message(func):
 # Manage connecting / disconnecting via websocket
 
 def ws_connect(message):
+    '''
+    Django Channels consumer method that consumes messages on the websocket.connect channel.    
+    '''
     message.reply_channel.send({"accept": True})
 
 @channel_session
 def ws_disconnect(message):
+    '''
+    Django Channels consumer method that consumes messages on the websocket.disconnect channel.
+    '''
+
+    # Remove the player from (1) the game's group and (2) the game state.
     game_id = message.channel_session.get("gameId")
     player_id = message.channel_session.get("playerId")
     if game_id:
@@ -50,6 +63,10 @@ def ws_disconnect(message):
 
 @decode_json_message
 def ws_dispatch_game_message(msg):    
+    '''
+    Django Channels consumer method that receives game messages and dispatches them
+    to the appropriate handler method.
+    '''
     fn = dispatch.get(msg.get('type', 'unknown'), gamerecv_unknown_type)
     return fn(msg)
 

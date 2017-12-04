@@ -13,12 +13,27 @@ from gamechannels.gameutils import *
 r = redis_connection()
 
 class RedisGameManager:
+    '''
+    GameManager that creates/reads the game state in/from redis, and provides methods
+    for modifying the game state in response to game events.
+    '''
+
     def __init__(self, redis_connection=r):
         self.redis = redis_connection
         self.try_word_script = self._init_try_word_script()
 
     def init_game(self, game_id, player_ids):
+        '''
+        Create a game with an initial game state. The game is not started yet.
+
+        A game with the provided id must not already exist.
+        '''
         keys = RedisGameKeyIndex(game_id)
+
+        existing_game = self.get_game_state(game_id)
+        if existing_game.exists():
+            raise Exception(f"Unable to create new game with id [{game_id}] because one already exists.")
+
         pipe = self.redis.pipeline()
         player_info = {pid: '{}' for pid in player_ids}
         pipe.hmset(keys.game_players_key(), player_info)
@@ -27,6 +42,11 @@ class RedisGameManager:
         return game_id
 
     def reinit_game(self, game_id):
+        '''
+        Reiniitalize an existing game with a fresh game state, but keeping the same players.
+
+        After reinitializing, the game will be ready to be started again. 
+        '''
         keys = RedisGameKeyIndex(game_id)
         pipe = self.redis.pipeline()
         exclude_keys = [
@@ -40,6 +60,9 @@ class RedisGameManager:
         return game_id
 
     def add_player(self, game_id, player_id):
+        '''
+        Add a player to the game.
+        '''
         keys = RedisGameKeyIndex(game_id)
         pipe = self.redis.pipeline()
         pipe.hset(keys.game_players_key(), str(player_id), '{}')
@@ -47,30 +70,49 @@ class RedisGameManager:
         return game_id
 
     def remove_player(self, game_id, player_id):
+        '''
+        Remove a player from the game.
+        '''
         keys = RedisGameKeyIndex(game_id)
         pipe = self.redis.pipeline()
         pipe.hdel(keys.game_players_key(), str(player_id))
         pipe.execute()
         return game_id
 
+    @staticmethod
+    def _scramble_word(word):
+        letters = list(word)
+        random.shuffle(letters)
+        letters = "".join(letters)
+        return letters
+
     def start_game(self, game_id, words, countdown=0, length=90):
+        '''
+        Start the game using the provided word set. Returns true on success. To start a game, it must be in either the WAITING or SCHEDULED state.
+
+        The countdown (seconds) can be used to set a start time in the future. The game will be SCHEDULED until that time.
+
+        The game length (seconds) controls how long the game lasts after the start time.
+        '''
+
         if self.get_game_status(game_id) not in [GameStatus.WAITING, GameStatus.SCHEDULED]:
             return False
 
         word_set = set(words)
 
         # Create a scrambled version of the available letters
-        words.sort(key=lambda w: len(w), reverse=True)
-        letters = list(words[0])
-        random.shuffle(letters)
-        letters = "".join(letters)
+        longest_word = max(words, key=lambda w: len(w))
+        letters = self._scramble_word(longest_word)
         letter_count = len(letters)
 
+        # Create an array containing the # game words at each length, counting from 0.
+        # e.g. [0, 0, 0, 9, 7] would mean there are 9 words of length 3.
         word_count_dic = collections.Counter((len(w) for w in word_set))
         word_count_arr = [0] * (letter_count + 1)
         for (w_length, w_count) in word_count_dic.items():
             word_count_arr[w_length] = w_count
 
+        # Save the started game state to redis.    
         pipe = self.redis.pipeline()
         keys = RedisGameKeyIndex(game_id)
         pipe.set(keys.game_letters_key(), letters)
@@ -87,6 +129,9 @@ class RedisGameManager:
         return True
 
     def set_expiry(self, game_id, seconds):
+        '''
+        Set the game state to expire from memory in the future.
+        '''
         keys = RedisGameKeyIndex(game_id)
         pipe = self.redis.pipeline()
         for key in keys:
@@ -94,6 +139,9 @@ class RedisGameManager:
         pipe.execute()
 
     def get_game_words(self, game_id):
+        '''
+        Get the game's word set. Contains used AND unused words.
+        '''
         keys = RedisGameKeyIndex(game_id)
         words = self.redis.smembers(keys.word_set_key())
         return words
@@ -157,6 +205,13 @@ class RedisGameManager:
         return self.try_word_script
 
     def use_word(self, game_id, player_id, word):
+        '''
+        Try to claim a word for a given player, succeeding if no other player claimed the word first. 
+        
+        Returns True if the player was able to claim the word, False otherwise.
+
+        Performs the test-and-claim atomically to prevent double use.
+        '''
         keys = RedisGameKeyIndex(game_id)
         res = self.try_word_script(
             keys=[keys.word_set_key(),
@@ -172,10 +227,16 @@ class RedisGameManager:
             return False
 
     def end_game(self, game_id):
+        '''
+        End a game, setting the end time to the current time. The game will enter the COMPLETED state.
+        '''
         keys = RedisGameKeyIndex(game_id)
         self.redis.set(keys.game_end_key(), timezone.now().isoformat())
 
     def clean_up_game(self, game_id):
+        '''
+        Delete the persisted game state.
+        '''
         pipe = self.redis.pipeline()
         keys = RedisGameKeyIndex(game_id)
         for k in self.redis.scan_iter(match=keys.game_key() + "*"):
@@ -183,12 +244,15 @@ class RedisGameManager:
         pipe.execute()
 
     def update_player_name(self, game_id, player_id, new_name):
+        '''
+        Update a player's name.
+        '''
         keys = RedisGameKeyIndex(game_id)
         player_info = json.loads(r.hget(keys.game_players_key(), player_id))
         player_info['name'] = new_name
         self.redis.hset(keys.game_players_key(), player_id, json.dumps(player_info))
         return player_info
-    
+
 
 class RedisGameKeyIndex:
     
