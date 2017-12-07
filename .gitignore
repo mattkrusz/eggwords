@@ -111,3 +111,6 @@ frontend/package-lock.json
 frontend/.storybook/
 
 /.vscode/
+
+dev_settings.py
+deploy_settings.py
