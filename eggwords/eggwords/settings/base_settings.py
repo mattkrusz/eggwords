@@ -13,7 +13,8 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# A little ugly, need an extra "dirname" because settings are modularized in this settings folder.
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Application definition
 
@@ -109,7 +110,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-REACT_APP_DIR = os.path.join(BASE_DIR, '../../frontend')
+REACT_APP_DIR = os.path.join(BASE_DIR, '../frontend')
 
 STATICFILES_DIRS = [
     os.path.join(REACT_APP_DIR, 'build', 'static'),
