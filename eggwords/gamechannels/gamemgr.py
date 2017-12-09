@@ -59,13 +59,21 @@ class RedisGameManager:
         pipe.execute()
         return game_id
 
-    def add_player(self, game_id, player_id):
+    def add_player(self, game_id, player_id, name=None):
         '''
         Add a player to the game.
         '''
+
+        if name is None:
+            name = "Player " + str(player_id)[-4:]
+
+        player_info = {
+            'name': name
+        }
+
         keys = RedisGameKeyIndex(game_id)
         pipe = self.redis.pipeline()
-        pipe.hset(keys.game_players_key(), str(player_id), '{}')
+        pipe.hset(keys.game_players_key(), str(player_id), json.dumps(player_info))
         pipe.execute()
         return game_id
 
