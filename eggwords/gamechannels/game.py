@@ -20,7 +20,16 @@ class GameState:
         self.id = id
         self.player_ids = list(player_info.keys())
         self.player_info = player_info
-        self.used_words = used_words
+        self.used_words_by_pid = used_words
+        self.used_words = list(used_words.keys())
+
+        # (Convenience) Denormalize the used words into a word list for each player.
+        for pi in self.player_info.values():
+            pi['words'] = []
+        for (w, pid) in used_words.items():
+            if pid in self.player_info:
+                self.player_info[pid]['words'].append(w)
+
         self.start_time = start_time
         self.end_time = end_time
         self.created_time = created_time
@@ -29,7 +38,7 @@ class GameState:
 
     def words_for(self, player_id):
         player_id = str(player_id)
-        return [w for w,p_id in self.used_words.items() if player_id == p_id]
+        return [w for w,p_id in self.used_words_by_pid.items() if player_id == p_id]
 
     def status(self):
         return self.status_at_time()
