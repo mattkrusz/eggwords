@@ -11,7 +11,7 @@ import time, os
 
 game_mgr = gamemgr.RedisGameManager()
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "eggwords.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "eggwords.settings.local_settings")
 
 test_words = ['spiders','diss','redips','eds','per','pes','speirs','sped','pride','psi','pied','rise',
     'reps','spires','prides','press','spired','pier','pies','resid','reis','die','ers','pries','pried',
@@ -38,9 +38,12 @@ def test_simple_game(game_id):
     print("Test game_id = " + str(game_id))
     
     p1_id = uuid.uuid4()
+    p1_token = uuid.uuid4()
+
     p2_id = uuid.uuid4()    
+    p2_token = uuid.uuid4()
     
-    game_mgr.init_game(game_id, [p1_id])
+    game_mgr.init_game(game_id, p1_id, p1_token)
 
     game_state = game_mgr.get_game_state(game_id)
     assert GameStatus.WAITING == game_mgr.get_game_status(game_id)
@@ -49,7 +52,7 @@ def test_simple_game(game_id):
     assert game_state.created_time is not None
     assert dateutil.parser.parse(game_state.created_time) < datetime.utcnow()   
 
-    game_mgr.add_player(game_id, p2_id)
+    game_mgr.add_player(game_id, p2_id, p2_token)
 
     game_state = game_mgr.get_game_state(game_id)
     assert GameStatus.WAITING == game_mgr.get_game_status(game_id)
@@ -153,9 +156,13 @@ def test_get_missing_game():
 
 def test_reinit_game(game_id):        
     p1_id = uuid.uuid4()
+    p1_token = uuid.uuid4()
+
     p2_id = uuid.uuid4()
+    p2_token = uuid.uuid4()
     
-    game_mgr.init_game(game_id, [p1_id, p2_id])
+    game_mgr.init_game(game_id, p1_id, p1_token)
+    game_mgr.add_player(game_id, p2_id, p2_token)
     game_mgr.start_game(game_id, test_words)
     game_mgr.end_game(game_id)
     assert GameStatus.COMPLETED == game_mgr.get_game_status(game_id)
@@ -172,7 +179,9 @@ def test_reinit_game(game_id):
 
 def test_player_info(game_id):
     p1_id = uuid.uuid4()
-    game_mgr.init_game(game_id, [p1_id])
+    p1_token = uuid.uuid4()
+
+    game_mgr.init_game(game_id, p1_id, p1_token)
     game_mgr.update_player_name(game_id, p1_id, 'TestName')
     gstate = game_mgr.get_game_state(game_id)
     assert 'TestName' == gstate.player_info[str(p1_id)]['name']

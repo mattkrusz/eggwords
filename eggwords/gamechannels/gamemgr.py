@@ -22,7 +22,7 @@ class RedisGameManager:
         self.redis = redis_connection
         self.try_word_script = self._init_try_word_script()
 
-    def init_game(self, game_id, player_ids):
+    def init_game(self, game_id, host_id, host_token):
         '''
         Create a game with an initial game state. The game is not started yet.
 
@@ -35,8 +35,9 @@ class RedisGameManager:
             raise Exception(f"Unable to create new game with id [{game_id}] because one already exists.")
 
         pipe = self.redis.pipeline()
-        player_info = {pid: '{}' for pid in player_ids}
-        pipe.hmset(keys.game_players_key(), player_info)
+        player_info_map = {host_id: '{}'}
+        pipe.hmset(keys.game_players_key(), player_info_map)
+        pipe.hset(keys.player_tokens_key(), host_id, host_token)
         pipe.set(keys.game_created_key(), timezone.now().utcnow())
         pipe.execute()
         return game_id
@@ -59,10 +60,13 @@ class RedisGameManager:
         pipe.execute()
         return game_id
 
-    def add_player(self, game_id, player_id, name=None):
+    def add_player(self, game_id, player_id, player_token, name=None):
         '''
         Add a player to the game.
         '''
+
+        player_id = str(player_id)
+        player_token = str(player_token)
 
         if name is None:
             name = "Player " + str(player_id)[-4:]
@@ -73,7 +77,8 @@ class RedisGameManager:
 
         keys = RedisGameKeyIndex(game_id)
         pipe = self.redis.pipeline()
-        pipe.hset(keys.game_players_key(), str(player_id), json.dumps(player_info))
+        pipe.hset(keys.game_players_key(), player_id, json.dumps(player_info))
+        pipe.hset(keys.player_tokens_key(),player_id, player_token)
         pipe.execute()
         return game_id
 
@@ -84,6 +89,7 @@ class RedisGameManager:
         keys = RedisGameKeyIndex(game_id)
         pipe = self.redis.pipeline()
         pipe.hdel(keys.game_players_key(), str(player_id))
+        pipe.hdel(keys.player_tokens_key(), str(player_id))
         pipe.execute()
         return game_id
 
@@ -277,6 +283,7 @@ class RedisGameKeyIndex:
         'word_set_key': '{game_key}:words',
         'player_key': '{game_key}:players',
         'used_words_set_key': '{game_key}:usedwords',
+        'player_tokens_key': '{game_key}:tokens',
     }
     
     def __init__(self, id):
@@ -324,6 +331,9 @@ class RedisGameKeyIndex:
 
     def used_words_set_key(self):
         return self.__key__('used_words_set_key')
+
+    def player_tokens_key(self):
+        return self.__key__('player_tokens_key')
 
     def __iter__(self):
         for key_name in self.keys.keys():

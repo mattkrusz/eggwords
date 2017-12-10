@@ -75,18 +75,21 @@ def ws_dispatch_game_message(msg):
 @channel_session
 def gamerecv_newgame(message):
     game_id = uuid.uuid4()
-    player_id = message.get("playerId")
-    if not player_id:
-        player_id = uuid.uuid4()
+    player_id = message.get("playerId") or uuid.uuid4()
+    player_token = message.get("playerToken") or uuid.uuid4()
+
     group_name = game_group_name(game_id)
     Group(group_name).add(message.reply_channel)
-    game_manager.init_game(game_id, [player_id])
+    
+    game_manager.init_game(game_id, player_id, player_token)    
     alias = create_game_alias(game_id)
+
     response = json.dumps({
         'type': 'NewGameResponse',
         'gameId': str(game_id),
         'alias': str(alias),
-        'playerId': str(player_id)
+        'playerId': str(player_id),
+        'playerToken': player_token,
     })
     
     message.reply_channel.send({"accept": True, "text":response})
@@ -109,11 +112,10 @@ def gamerecv_joingame(message):
         game_id = dealias_game(game_id)
         # TODO: if it doesn't exist ...
     group_name = game_group_name(game_id)    
-    player_id = message.get("playerId")
-    if not player_id:
-        player_id = uuid.uuid4()
+    player_id = message.get("playerId") or uuid.uuid4()
+    player_token = message.get("playerToken") or uuid.uuid4()
     Group(group_name).add(message['reply_channel'])    
-    game_manager.add_player(game_id, player_id)
+    game_manager.add_player(game_id, player_id, player_token)
     message.channel_session["gameId"] = str(game_id)
     message.channel_session["playerId"] = str(player_id)
     
@@ -121,7 +123,8 @@ def gamerecv_joingame(message):
         'type': 'JoinGameResponse',
         'gameId': game_id,
         'alias': alias,
-        'playerId': str(player_id)
+        'playerId': str(player_id),
+        'playerToken': player_token,
     })
 
     message.reply_channel.send({"accept": True, "text":response})  
