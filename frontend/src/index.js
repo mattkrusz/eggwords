@@ -72,9 +72,11 @@ gc.onJoinGame().subscribe((e) => {
 
 const mapStateToProps = state => {
     let myPlayerId = playerId;
+
     let oppWords = Object.entries(state.game.usedWords)
-        .filter(([word, playerId]) => playerId !== myPlayerId)
-        .map(([word, playerId]) => word);
+        .filter(([playerId, words]) => playerId !== myPlayerId)
+        .map(([playerIds, words]) => words)
+        .reduce((acc, cur) => acc.concat(cur), []);
 
     let inputRPadding = state.game.letters ? state.game.letters.length : 7;
     let typed = state.player.typed.padEnd(inputRPadding, ' ');
@@ -168,10 +170,15 @@ let wordResponseStream = reduxActionStream
 let gamestateUpdateStream = reduxActionStream
     .filter((action) => (action.type === Actions.UPDATE_GAME_STATE));
 
-// The usedWords part of the state is an object mapping (usedWord -> playerId) where playerId is
-// the id of the player that used the word.
+// The usedWords part of the state is an object mapping (playerId -> [w1, w2, ...])
 let usedWordsStream = gamestateUpdateStream
-    .flatMap((action) => Rx.Observable.from(Object.entries(action.gameState.usedWords)))
+    .flatMap((action) => {
+        // Invert the usedWords object from { pid: [w1, w2, w3] } to { w1: pid, w2: pid, ... }
+        let usedWordsByPid = action.gameState.usedWords;
+        return Rx.Observable.from(
+            Object.entries(usedWordsByPid).map(([pid, words]) => words.map((w) => [w, pid])).reduce((acc, cur) => acc.concat(cur), [])
+        );
+    })        
     .distinct((kv) => kv[0]);
 let myUsedWordsStream = usedWordsStream
     .filter((kv) => kv[1] === playerId);
