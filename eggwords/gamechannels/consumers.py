@@ -89,7 +89,7 @@ def gamerecv_newgame(message):
         'gameId': str(game_id),
         'alias': str(alias),
         'playerId': str(player_id),
-        'playerToken': player_token,
+        'playerToken': str(player_token),
     })
     
     message.reply_channel.send({"accept": True, "text":response})
@@ -124,7 +124,7 @@ def gamerecv_joingame(message):
         'gameId': game_id,
         'alias': alias,
         'playerId': str(player_id),
-        'playerToken': player_token,
+        'playerToken': str(player_token),
     })
 
     message.reply_channel.send({"accept": True, "text":response})  
