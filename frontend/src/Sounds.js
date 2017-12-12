@@ -2,6 +2,14 @@ import Rx from 'rxjs/Rx';
 
 import * as Actions from './Actions';
 
+/**
+ * Instances of the GameSound class take the stream of redux actions,
+ * and react to them with sounds when appropriate.
+ * 
+ * Note: This currently does not work on Safari due to its auto-play 
+ * policies. (The sounds here are played in response to game events,
+ * which may not be directly derived from user input events).
+ */
 class GameSound {
 
     constructor(reduxActionStream, playerId) {
@@ -32,27 +40,6 @@ class GameSound {
         this.opponentUsedWordsStream = this.usedWordsStream
             .filter((kv) => kv[1] !== this.playerId);
             
-        this.wordResponseStream.subscribe((a) => {
-            if (a.result === 'REJECT') {
-                if (a.rejectReason === Actions.REJECT_REASON.NOT_A_WORD) {
-                    this.playAudioById("audio-reject-naw");
-                } else if (a.rejectReason === Actions.REJECT_REASON.WORD_USED) {
-                    this.playAudioById("audio-reject-used");
-                }
-            } else {
-                if (a.word.length == 7) {
-                    this.playAudioById("audio-accept-big");
-                } else {
-                    this.playAudioById('audio-accept');
-                }
-            }
-        }
-        );
-
-        this.opponentUsedWordsStream.throttleTime(500).subscribe((ouw) => {
-            this.playAudioById("audio-opp-word");
-        });
-
         this.gameResultStream = this.gamestateUpdateStream
             .filter((action) => (action.type === Actions.UPDATE_GAME_STATE))
             .filter((action) => (action.gameState.gameStatus === "COMPLETED"))
@@ -63,24 +50,13 @@ class GameSound {
             .filter((action) => (action.gameState.gameStatus === "PLAYING"))
             .distinct((action) => action.gameState.startTime);
 
-        this.gameResultStream.subscribe((a) => {
-            let scoreById = a.gameState.score;
-            let topScore = Math.max(...Object.values(scoreById));
-            let playerWon = scoreById[this.playerId] === topScore;
-            let multiplayer = Object.keys(scoreById).length > 1;
-            if (multiplayer && playerWon) {
-                this.playAudioById('audio-victory');
-            } else if (multiplayer) {
-                this.playAudioById("audio-defeat");
-            } else {
-                this.playAudioById("audio-sour-victory");
-            }
-        });
+        
+        // Subscribe to the event streams, delegating to instance methods.
+        this.gameResultStream.subscribe(this.handleGameResult);
+        this.gameStartStream.subscribe(this.handleGameStart);        
+        this.wordResponseStream.subscribe(this.handleWordResponse);
+        this.opponentUsedWordsStream.throttleTime(500).subscribe(this.handleOpponentWord);
 
-        this.gameStartStream.subscribe((a) => {
-            this.playAudioById("audio-game-start");
-        });        
-  
     }
 
     mute() {
@@ -89,6 +65,44 @@ class GameSound {
 
     unmute() {
         this.muted = false;
+    }
+
+    handleOpponentWord = (ouw) => {
+        this.playAudioById("audio-opp-word");
+    }
+
+    handleWordResponse = (a) => {
+        if (a.result === 'REJECT') {
+            if (a.rejectReason === Actions.REJECT_REASON.NOT_A_WORD) {
+                this.playAudioById("audio-reject-naw");
+            } else if (a.rejectReason === Actions.REJECT_REASON.WORD_USED) {
+                this.playAudioById("audio-reject-used");
+            }
+        } else {
+            if (a.word.length == 7) {
+                this.playAudioById("audio-accept-big");
+            } else {
+                this.playAudioById('audio-accept');
+            }
+        }
+    }
+
+    handleGameStart = (a) => {
+        this.playAudioById("audio-game-start");
+    }
+
+    handleGameResult = (a) => {
+        let scoreById = a.gameState.score;
+        let topScore = Math.max(...Object.values(scoreById));
+        let playerWon = scoreById[this.playerId] === topScore;
+        let multiplayer = Object.keys(scoreById).length > 1;
+        if (multiplayer && playerWon) {
+            this.playAudioById('audio-victory');
+        } else if (multiplayer) {
+            this.playAudioById("audio-defeat");
+        } else {
+            this.playAudioById("audio-sour-victory");
+        }
     }
 
     playAudioById(id) {
