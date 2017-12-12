@@ -8,14 +8,14 @@ from channels import Group, Channel
 from channels.sessions import channel_session
 
 from gamechannels.word_lists import word_lists
-import gamechannels.gamemgr as gamemgr
+import gamechannels.gameservice as gameservice
 from gamechannels.game import GameStatus
 from gamechannels.gamealias import create_game_alias, dealias_game
 from gamechannels.models import WordSet
 
 DEFAULT_GAME_LENGTH = 120
 
-game_manager = gamemgr.RedisGameManager()
+game_service = gameservice.RedisGameService()
 
 re_uuid4 = re.compile('[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}')
 
@@ -58,7 +58,7 @@ def ws_disconnect(message):
         group_name = game_group_name(game_id)
         Group(group_name).discard(message.reply_channel)
         if player_id:
-            game_manager.remove_player(game_id, player_id)
+            game_service.remove_player(game_id, player_id)
 
 # Route game messages.
 
@@ -82,7 +82,7 @@ def gamerecv_newgame(message):
     group_name = game_group_name(game_id)
     Group(group_name).add(message.reply_channel)
     
-    game_manager.init_game(game_id, player_id, player_token)    
+    game_service.init_game(game_id, player_id, player_token)    
     alias = create_game_alias(game_id)
 
     response = json.dumps({
@@ -116,7 +116,7 @@ def gamerecv_joingame(message):
     player_id = message.get("playerId") or uuid.uuid4()
     player_token = message.get("playerToken") or uuid.uuid4()
     Group(group_name).add(message['reply_channel'])    
-    game_manager.add_player(game_id, player_id, player_token)
+    game_service.add_player(game_id, player_id, player_token)
     message.channel_session["gameId"] = str(game_id)
     message.channel_session["playerId"] = str(player_id)
     
@@ -142,7 +142,7 @@ def gamerecv_start_game(message):
     word_set = WordSet.objects.random()
     words = [w.word for w in word_set.words.all()]
     game_seconds = DEFAULT_GAME_LENGTH
-    did_start = game_manager.start_game(game_id, words, length = game_seconds)    
+    did_start = game_service.start_game(game_id, words, length = game_seconds)    
 
     if did_start:
         delayed_message = {
@@ -165,7 +165,7 @@ def gamerecv_submit_word(message):
     group_name = game_group_name(game_id)    
     player_id = message['playerId']    
     word = message['word']
-    result = game_manager.use_word(game_id, player_id, word)
+    result = game_service.use_word(game_id, player_id, word)
 
     response = json.dumps({
         'type': 'SendWordResponse',
@@ -182,18 +182,18 @@ def gamerecv_submit_word(message):
 def gamerecv_expire_game(message):
     game_id = message['gameId']
     expire_after_seconds =  message.get('expire_after_seconds', 120)
-    game_manager.set_expiry(game_id, expire_after_seconds)
+    game_service.set_expiry(game_id, expire_after_seconds)
 
 
 def gamerecv_end_game(message):
     game_id = message['gameId']
     group_name = game_group_name(game_id)
-    game_state = game_manager.get_game_state(game_id)
+    game_state = game_service.get_game_state(game_id)
     attempt_num = message.get('attempt_num', 0)
     if game_state.status() == GameStatus.COMPLETED:
         send_game_state(game_id)
         send_reveal_words(game_id)
-        game_manager.set_expiry(game_id, 120)
+        game_service.set_expiry(game_id, 120)
     elif attempt_num < 9:
         delayed_message = {
             'channel': 'game.end',
@@ -207,7 +207,7 @@ def gamerecv_reinitgame(message):
     game_id = message['gameId']
     group_name = game_group_name(game_id)
 
-    game_manager.reinit_game(game_id)
+    game_service.reinit_game(game_id)
 
     response = json.dumps({
         'type': 'ReinitGameResponse',
@@ -229,7 +229,7 @@ def gamerecv_change_name(message):
     group_name = game_group_name(game_id)
     player_id = message['playerId']
     name = message['name']
-    game_manager.update_player_name(game_id, player_id, name)
+    game_service.update_player_name(game_id, player_id, name)
     response = {
         'type': 'PlayerInfoUpdate',
         'gameId': game_id,
@@ -248,7 +248,7 @@ def send_game_state(game_id, game_state=None):
     group_name = game_group_name(game_id)
 
     if game_state is None:
-        game_state = game_manager.get_game_state(game_id)
+        game_state = game_service.get_game_state(game_id)
 
     game_state_resp = {
         'type': 'GameState',
@@ -259,7 +259,7 @@ def send_game_state(game_id, game_state=None):
 
 def send_reveal_words(game_id):
     group_name = game_group_name(game_id)
-    game_words = game_manager.get_game_words(game_id)
+    game_words = game_service.get_game_words(game_id)
     response = json.dumps({
         'type': 'RevealWords',
         'gameId': game_id,

@@ -12,9 +12,9 @@ from gamechannels.gameutils import *
 
 r = redis_connection()
 
-class RedisGameManager:
+class RedisGameService:
     '''
-    GameManager that creates/reads the game state in/from redis, and provides methods
+    GameService that creates/reads the game state in/from redis, and provides methods
     for modifying the game state in response to game events.
     '''
 

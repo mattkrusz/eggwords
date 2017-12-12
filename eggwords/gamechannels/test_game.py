@@ -1,6 +1,6 @@
 import pytest
 import uuid
-import gamechannels.gamemgr as gamemgr
+import gamechannels.gameservice as gameservice
 import gamechannels.score as score_service
 import dateutil.parser
 from datetime import datetime, timedelta
@@ -9,7 +9,7 @@ from gamechannels.game import GameStatus, GameState
 from collections import Counter
 import time, os
 
-game_mgr = gamemgr.RedisGameManager()
+game_service = gameservice.RedisGameService()
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "eggwords.settings.local_settings")
 
@@ -32,7 +32,7 @@ def game_id():
     game_id = uuid.uuid4()
     yield game_id
     # import pdb; pdb.set_trace()
-    game_mgr.clean_up_game(game_id)
+    game_service.clean_up_game(game_id)
 
 def test_simple_game(game_id):
     print("Test game_id = " + str(game_id))
@@ -43,50 +43,50 @@ def test_simple_game(game_id):
     p2_id = uuid.uuid4()    
     p2_token = uuid.uuid4()
     
-    game_mgr.init_game(game_id, p1_id, p1_token)
+    game_service.init_game(game_id, p1_id, p1_token)
 
-    game_state = game_mgr.get_game_state(game_id)
-    assert GameStatus.WAITING == game_mgr.get_game_status(game_id)
+    game_state = game_service.get_game_state(game_id)
+    assert GameStatus.WAITING == game_service.get_game_status(game_id)
     assert 1 == len(game_state.player_ids)
     assert str(p1_id) in game_state.player_ids
     assert game_state.created_time is not None
     assert dateutil.parser.parse(game_state.created_time) < datetime.utcnow()   
 
-    game_mgr.add_player(game_id, p2_id, p2_token)
+    game_service.add_player(game_id, p2_id, p2_token)
 
-    game_state = game_mgr.get_game_state(game_id)
-    assert GameStatus.WAITING == game_mgr.get_game_status(game_id)
+    game_state = game_service.get_game_state(game_id)
+    assert GameStatus.WAITING == game_service.get_game_status(game_id)
     assert 2 == len(game_state.player_ids)
     assert str(p1_id) in game_state.player_ids
     assert str(p2_id) in game_state.player_ids
 
-    result = game_mgr.use_word(game_id, p1_id, 'spiders')
+    result = game_service.use_word(game_id, p1_id, 'spiders')
     assert result == False
 
-    did_start = game_mgr.start_game(game_id, test_words, countdown = 1)
+    did_start = game_service.start_game(game_id, test_words, countdown = 1)
     assert did_start
 
-    words = game_mgr.get_game_words(game_id)
+    words = game_service.get_game_words(game_id)
     assert words is not None
     for t in test_words:
         assert t in words
 
-    game_state = game_mgr.get_game_state(game_id)
-    assert GameStatus.SCHEDULED == game_mgr.get_game_status(game_id)
+    game_state = game_service.get_game_state(game_id)
+    assert GameStatus.SCHEDULED == game_service.get_game_status(game_id)
     assert len('spiders') == len(game_state.letters)
     for l in 'spiders':
         assert l in game_state.letters
     
     time.sleep(1)
-    assert GameStatus.PLAYING == game_mgr.get_game_status(game_id)
+    assert GameStatus.PLAYING == game_service.get_game_status(game_id)
 
-    result = game_mgr.use_word(game_id, p1_id, 'spiders')
+    result = game_service.use_word(game_id, p1_id, 'spiders')
     assert result == True
 
-    result2 = game_mgr.use_word(game_id, p2_id, 'spiders')
+    result2 = game_service.use_word(game_id, p2_id, 'spiders')
     assert result2 == False
 
-    game_state = game_mgr.get_game_state(game_id)
+    game_state = game_service.get_game_state(game_id)
 
     p1_words = game_state.words_for(p1_id)
     assert len(p1_words) == 1
@@ -95,9 +95,9 @@ def test_simple_game(game_id):
     p2_words = game_state.words_for(p2_id)
     assert len(p2_words) == 0
 
-    game_mgr.end_game(game_id)
-    game_state = game_mgr.get_game_state(game_id)
-    assert GameStatus.COMPLETED == game_mgr.get_game_status(game_id)
+    game_service.end_game(game_id)
+    game_state = game_service.get_game_state(game_id)
+    assert GameStatus.COMPLETED == game_service.get_game_status(game_id)
 
 def test_score():
     p1_id = uuid.uuid4()
@@ -148,10 +148,10 @@ def test_score():
     assert score1[p1_id] > score1[p2_id]
 
 def test_expire(game_id):
-    game_mgr.set_expiry(game_id, 180)
+    game_service.set_expiry(game_id, 180)
 
 def test_get_missing_game():
-    game_state = game_mgr.get_game_state(uuid.uuid4())
+    game_state = game_service.get_game_state(uuid.uuid4())
     assert not game_state.exists()
 
 def test_reinit_game(game_id):        
@@ -161,14 +161,14 @@ def test_reinit_game(game_id):
     p2_id = uuid.uuid4()
     p2_token = uuid.uuid4()
     
-    game_mgr.init_game(game_id, p1_id, p1_token)
-    game_mgr.add_player(game_id, p2_id, p2_token)
-    game_mgr.start_game(game_id, test_words)
-    game_mgr.end_game(game_id)
-    assert GameStatus.COMPLETED == game_mgr.get_game_status(game_id)
+    game_service.init_game(game_id, p1_id, p1_token)
+    game_service.add_player(game_id, p2_id, p2_token)
+    game_service.start_game(game_id, test_words)
+    game_service.end_game(game_id)
+    assert GameStatus.COMPLETED == game_service.get_game_status(game_id)
 
-    game_mgr.reinit_game(game_id)
-    gstate = game_mgr.get_game_state(game_id)
+    game_service.reinit_game(game_id)
+    gstate = game_service.get_game_state(game_id)
     assert GameStatus.WAITING == gstate.status()
     assert gstate.start_time is None
     assert gstate.end_time is None
@@ -181,8 +181,8 @@ def test_player_info(game_id):
     p1_id = uuid.uuid4()
     p1_token = uuid.uuid4()
 
-    game_mgr.init_game(game_id, p1_id, p1_token)
-    game_mgr.update_player_name(game_id, p1_id, 'TestName')
-    gstate = game_mgr.get_game_state(game_id)
+    game_service.init_game(game_id, p1_id, p1_token)
+    game_service.update_player_name(game_id, p1_id, 'TestName')
+    gstate = game_service.get_game_state(game_id)
     assert 'TestName' == gstate.player_info[str(p1_id)]['name']
     
