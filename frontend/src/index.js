@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import Game from './GameComponent';
+import GameSound from './Sounds'
 import registerServiceWorker from './registerServiceWorker';
 import Rx from 'rxjs/Rx';
 import { Provider, connect } from 'react-redux';
@@ -164,88 +165,4 @@ document.addEventListener("keydown", (e) => {
 
 localStorage.debug = '*';
 
-// Use rxjs to "react" to game events outside of React.
-let wordResponseStream = reduxActionStream
-    .filter((action) => (action.type === Actions.WORD_RESPONSE));
-let gamestateUpdateStream = reduxActionStream
-    .filter((action) => (action.type === Actions.UPDATE_GAME_STATE));
-
-// The usedWords part of the state is an object mapping (playerId -> [w1, w2, ...])
-let usedWordsStream = gamestateUpdateStream
-    .flatMap((action) => {
-        // Invert the usedWords object from { pid: [w1, w2, w3] } to { w1: pid, w2: pid, ... }
-        let usedWordsByPid = action.gameState.usedWords;
-        return Rx.Observable.from(
-            Object.entries(usedWordsByPid).map(([pid, words]) => words.map((w) => [w, pid])).reduce((acc, cur) => acc.concat(cur), [])
-        );
-    })        
-    .distinct((kv) => kv[0]);
-let myUsedWordsStream = usedWordsStream
-    .filter((kv) => kv[1] === playerId);
-let opponentUsedWordsStream = usedWordsStream
-    .filter((kv) => kv[1] !== playerId);
-
-myUsedWordsStream.subscribe((kv) => {
-    console.log(kv);
-});
-
-opponentUsedWordsStream.subscribe((kv) => {
-    console.log(kv);
-});
-
-// Sounds
-function playAudioById(id) {
-    let audio = document.getElementById(id);
-    audio.pause();
-    audio.currentTime = 0;
-    audio.play();
-}
-
-wordResponseStream.subscribe((a) => {
-        if (a.result === 'REJECT') {
-            if (a.rejectReason === Actions.REJECT_REASON.NOT_A_WORD) {
-                playAudioById("audio-reject-naw");
-            } else if (a.rejectReason === Actions.REJECT_REASON.WORD_USED) {
-                playAudioById("audio-reject-used");
-            }
-        } else {
-            if (a.word.length == 7) {
-                playAudioById("audio-accept-big");
-            } else {
-                playAudioById('audio-accept');
-            }
-        }
-    }
-);
-
-opponentUsedWordsStream.throttleTime(500).subscribe((ouw) => {
-    playAudioById("audio-opp-word");
-});
-
-let gameResultStream = gamestateUpdateStream
-    .filter((action) => (action.type === Actions.UPDATE_GAME_STATE))
-    .filter((action) => (action.gameState.gameStatus === "COMPLETED"))
-    .distinct((action) => action.gameState.endTime);
-
-let gameStartStream = gamestateUpdateStream
-    .filter((action) => (action.type === Actions.UPDATE_GAME_STATE))
-    .filter((action) => (action.gameState.gameStatus === "PLAYING"))
-    .distinct((action) => action.gameState.startTime);
-
-gameResultStream.subscribe((a) => {
-    let scoreById = a.gameState.score;
-    let topScore = Math.max(...Object.values(scoreById));
-    let playerWon = scoreById[playerId] === topScore;
-    let multiplayer = Object.keys(scoreById).length > 1;
-    if (multiplayer && playerWon) {
-        playAudioById('audio-victory');
-    } else  if (multiplayer) {
-        playAudioById("audio-defeat");
-    } else {
-        playAudioById("audio-sour-victory");
-    }
-});
-
-gameStartStream.subscribe((a) => {
-    playAudioById("audio-game-start");
-});
+let gameSound = new GameSound(reduxActionStream, playerId);
