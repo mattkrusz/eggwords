@@ -31,7 +31,7 @@ class GameState:
 
         self.game_id = self._ensure_UUID(game_id)
         self.player_ids = set(self._ensure_UUID(pid) for pid in player_info.keys())
-        self.player_info = { self._ensure_UUID(k):v for (k, v) in player_info.items() }
+        self.player_info = {self._ensure_UUID(k):v for (k, v) in player_info.items()}
         self.used_words = list(used_words.keys())
 
         self.used_words_by_pid: DefaultDict[uuid.UUID, List[str]] = defaultdict(list)
@@ -46,7 +46,7 @@ class GameState:
 
     @staticmethod
     def _ensure_UUID(inp):
-        if type(inp) is str:
+        if isinstance(inp, str):
             return uuid.UUID(inp)
         elif isinstance(inp, uuid.UUID):
             return inp

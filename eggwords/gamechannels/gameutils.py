@@ -1,5 +1,5 @@
 import uuid
-import datetime
+from datetime import datetime
 import json
 
 def normalize_word(w):
@@ -15,10 +15,10 @@ def json_fallback(obj):
     raise TypeError("Type %s not serializable" % type(obj))
 
 class CustomJsonEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, datetime.datetime):
-            return obj.isoformat()
-        elif isinstance(obj, uuid.UUID):
-            return str(obj)
+    def default(self, o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+        elif isinstance(o, uuid.UUID):
+            return str(o)
         else:
-            return json.JSONEncoder.default(self, obj)
+            return json.JSONEncoder.default(self, o)
