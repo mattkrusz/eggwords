@@ -11,6 +11,7 @@ from gamechannels.word_lists import word_lists
 import gamechannels.gamemgr as gamemgr
 from gamechannels.game import GameStatus
 from gamechannels.gamealias import create_game_alias, dealias_game
+from gamechannels.models import WordSet
 
 DEFAULT_GAME_LENGTH = 120
 
@@ -138,7 +139,8 @@ def gamerecv_joingame(message):
 
 def gamerecv_start_game(message):
     game_id = message['gameId']
-    words = random.choice(word_lists)
+    word_set = WordSet.objects.random()
+    words = [w.word for w in word_set.words.all()]
     game_seconds = DEFAULT_GAME_LENGTH
     did_start = game_manager.start_game(game_id, words, length = game_seconds)    
 

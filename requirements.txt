@@ -4,3 +4,4 @@ asgi_redis
 redis
 hiredis
 python-dateutil
+pytest-django
