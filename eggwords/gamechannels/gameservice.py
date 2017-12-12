@@ -176,6 +176,8 @@ class RedisGameService:
         player_info_deserialized = {pid: json.loads(
             info_json) for (pid, info_json) in player_info.items()}
 
+        word_count = [int(c) for c in res[6]]
+
         return GameState(
             game_id,
             player_info_deserialized,
@@ -184,7 +186,7 @@ class RedisGameService:
             res[3],
             res[4],
             res[5],
-            res[6]
+            word_count
         )
 
 
@@ -286,9 +288,9 @@ class RedisGameKeyIndex:
         'player_tokens_key': '{game_key}:tokens',
     }
     
-    def __init__(self, id):
-        self.id = id
-        self._game_key = 'games::game-' + str(self.id)
+    def __init__(self, game_id):
+        self.game_id = game_id
+        self._game_key = 'games::game-' + str(self.game_id)
 
     def game_key(self):
         return self._game_key

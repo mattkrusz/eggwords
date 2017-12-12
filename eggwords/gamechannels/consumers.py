@@ -1,18 +1,19 @@
-import uuid, json, random, re
+import uuid
+import json
+import re
 from functools import wraps
 
-from django.http import HttpResponse
-from channels.handler import AsgiHandler
-from channels.message import Message
 from channels import Group, Channel
+from channels.message import Message
 from channels.sessions import channel_session
 
-from gamechannels.word_lists import word_lists
 import gamechannels.gameservice as gameservice
 from gamechannels.game import GameStatus
 from gamechannels.gamealias import create_game_alias, dealias_game
 from gamechannels.models import WordSet
+from gamechannels.gameutils import CustomJsonEncoder
 
+json_encoder = CustomJsonEncoder()
 DEFAULT_GAME_LENGTH = 120
 
 game_service = gameservice.RedisGameService()
@@ -20,28 +21,28 @@ game_service = gameservice.RedisGameService()
 re_uuid4 = re.compile('[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}')
 
 def game_group_name(game_id):
-    return 'game-' + str(game_id)    
+    return 'game-' + str(game_id)
 
 def decode_json_message(func):
     '''
     Decorator for Django Channels consumer methods that decodes the message text as json.
-    
-    Also takes all the attributes of that json and raises them to be attributes on the message's content dict. 
+
+    Also takes all the attributes of that json and raises them to be attributes on the message's content dict.
     '''
     @wraps(func)
-    def wrapped(*args, **kwargs):     
-        msg = args[0]              
+    def wrapped(*args, **kwargs):
+        msg = args[0]
         decoded_json = json.loads(msg.get('text'))
         new_content = { **msg.content, **decoded_json }
         processed_msg = Message(new_content, msg.channel.name, msg.channel_layer)
         return func(processed_msg, **kwargs)
     return wrapped
-        
+
 # Manage connecting / disconnecting via websocket
 
 def ws_connect(message):
     '''
-    Django Channels consumer method that consumes messages on the websocket.connect channel.    
+    Django Channels consumer method that consumes messages on the websocket.connect channel.
     '''
     message.reply_channel.send({"accept": True})
 
@@ -63,13 +64,13 @@ def ws_disconnect(message):
 # Route game messages.
 
 @decode_json_message
-def ws_dispatch_game_message(msg):    
+def ws_dispatch_game_message(msg):
     '''
     Django Channels consumer method that receives game messages and dispatches them
     to the appropriate handler method.
     '''
-    fn = dispatch.get(msg.get('type', 'unknown'), gamerecv_unknown_type)
-    return fn(msg)
+    dispatch_fn = dispatch.get(msg.get('type', 'unknown'), gamerecv_unknown_type)
+    return dispatch_fn(msg)
 
 # Consume game messages.
 
@@ -81,29 +82,29 @@ def gamerecv_newgame(message):
 
     group_name = game_group_name(game_id)
     Group(group_name).add(message.reply_channel)
-    
-    game_service.init_game(game_id, player_id, player_token)    
+
+    game_service.init_game(game_id, player_id, player_token)
     alias = create_game_alias(game_id)
 
-    response = json.dumps({
+    response = json_encoder.encode({
         'type': 'NewGameResponse',
         'gameId': str(game_id),
         'alias': str(alias),
         'playerId': str(player_id),
         'playerToken': str(player_token),
     })
-    
+
     message.reply_channel.send({"accept": True, "text":response})
     message.channel_session["gameId"] = str(game_id)
     message.channel_session["playerId"] = str(player_id)
     send_game_state(game_id)
-    
+
     expiry = {
-        'gameId': str(game_id), 
-        'expire_after_seconds': 600        
+        'gameId': str(game_id),
+        'expire_after_seconds': 600
     }
     Channel('game.expire').send(expiry)
-    
+
 @channel_session
 def gamerecv_joingame(message):
     game_id = message['gameId']
@@ -112,15 +113,15 @@ def gamerecv_joingame(message):
         alias = game_id
         game_id = dealias_game(game_id)
         # TODO: if it doesn't exist ...
-    group_name = game_group_name(game_id)    
+    group_name = game_group_name(game_id)
     player_id = message.get("playerId") or uuid.uuid4()
     player_token = message.get("playerToken") or uuid.uuid4()
-    Group(group_name).add(message['reply_channel'])    
+    Group(group_name).add(message['reply_channel'])
     game_service.add_player(game_id, player_id, player_token)
     message.channel_session["gameId"] = str(game_id)
     message.channel_session["playerId"] = str(player_id)
-    
-    response = json.dumps({
+
+    response = json_encoder.encode({
         'type': 'JoinGameResponse',
         'gameId': game_id,
         'alias': alias,
@@ -128,12 +129,12 @@ def gamerecv_joingame(message):
         'playerToken': str(player_token),
     })
 
-    message.reply_channel.send({"accept": True, "text":response})  
-    send_game_state(game_id) 
+    message.reply_channel.send({"accept": True, "text":response})
+    send_game_state(game_id)
 
     expiry = {
-        'gameId': str(game_id), 
-        'expire_after_seconds': 600        
+        'gameId': str(game_id),
+        'expire_after_seconds': 600
     }
     Channel('game.expire').send(expiry)
 
@@ -142,7 +143,7 @@ def gamerecv_start_game(message):
     word_set = WordSet.objects.random()
     words = [w.word for w in word_set.words.all()]
     game_seconds = DEFAULT_GAME_LENGTH
-    did_start = game_service.start_game(game_id, words, length = game_seconds)    
+    did_start = game_service.start_game(game_id, words, length = game_seconds)
 
     if did_start:
         delayed_message = {
@@ -150,33 +151,33 @@ def gamerecv_start_game(message):
             'content': {'gameId': str(game_id)},
             'delay': (game_seconds+1) * 1000
         }
-        Channel('asgi.delay').send(delayed_message, immediately=True)    
+        Channel('asgi.delay').send(delayed_message, immediately=True)
 
         send_game_state(game_id)
 
         expiry = {
-            'gameId': str(game_id), 
-            'expire_after_seconds': 120 + game_seconds     
+            'gameId': str(game_id),
+            'expire_after_seconds': 120 + game_seconds
         }
         Channel('game.expire').send(expiry)
 
 def gamerecv_submit_word(message):
     game_id = message['gameId']
-    group_name = game_group_name(game_id)    
-    player_id = message['playerId']    
+    group_name = game_group_name(game_id)
+    player_id = message['playerId']
     word = message['word']
     result = game_service.use_word(game_id, player_id, word)
 
-    response = json.dumps({
+    response = json_encoder.encode({
         'type': 'SendWordResponse',
-        'gameId': game_id, 
+        'gameId': game_id,
         'playerId': player_id,
         'word': word,
         'result':  'ACCEPT' if result else 'REJECT'
     })
-    message.reply_channel.send({'text': response})      
+    message.reply_channel.send({'text': response})
 
-    if result == True:         
+    if result == True:
         send_game_state(game_id)
 
 def gamerecv_expire_game(message):
@@ -209,14 +210,14 @@ def gamerecv_reinitgame(message):
 
     game_service.reinit_game(game_id)
 
-    response = json.dumps({
+    response = json_encoder.encode({
         'type': 'ReinitGameResponse',
         'gameId': message['gameId']
     })
 
     message.reply_channel.send({"accept": True, "text": response})
 
-    reinit_msg = json.dumps({
+    reinit_msg = json_encoder.encode({
         'type': 'GameReinitialized',
         'gameId': message['gameId']
     })
@@ -237,7 +238,7 @@ def gamerecv_change_name(message):
         'info': {'name': name},
         'accept': True
     }
-    Group(group_name).send({'text': json.dumps(response)})
+    Group(group_name).send({'text': json_encoder.encode(response)})
 
 def gamerecv_unknown_type(message):
     pass
@@ -255,18 +256,18 @@ def send_game_state(game_id, game_state=None):
         **game_state.json_dict()
     }
 
-    Group(group_name).send({'text': json.dumps(game_state_resp)})
+    Group(group_name).send({'text': json_encoder.encode(game_state_resp)})
 
 def send_reveal_words(game_id):
     group_name = game_group_name(game_id)
     game_words = game_service.get_game_words(game_id)
-    response = json.dumps({
+    response = json_encoder.encode({
         'type': 'RevealWords',
         'gameId': game_id,
         'words': list(game_words)
     })
     Group(group_name).send({'text': response})
-    
+
 # Dict for dispatching game messages to consumers.
 
 dispatch = {
