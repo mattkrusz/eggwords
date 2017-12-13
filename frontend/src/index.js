@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import Game from './GameComponent';
+
+import createContainerComponent from './GameContainerComponent';
 import GameSound from './Sounds'
-import registerServiceWorker from './registerServiceWorker';
 import Rx from 'rxjs/Rx';
-import { Provider, connect } from 'react-redux';
+import { Provider } from 'react-redux';
 
 import rootReducer from './Reducers';
 import  * as Actions from './Actions';
@@ -21,6 +21,9 @@ let storage = window.localStorage;
 /*
   Set up redux middleware and then create the redux store.
 */
+
+// Set up a simple, custom rx middleware, used only for 
+// _consuming_ redux actions as a stream.
 const rxMiddleware = RxActionMiddleware();
 let reduxActionStream = rxMiddleware.observable;
 
@@ -34,18 +37,43 @@ const store = createStore(
     rootReducer,
     applyMiddleware(
       thunkMiddleware,
-      loggerMiddleware,
+      // loggerMiddleware,
       rxMiddleware
     )
 );
 
+/*
+  Initialize other critical components.
+*/
+
+// GameClient for making / receiving messages over a websocket connection.
 const gc = new GameClient();
+
+// ActionFactory for dispatching actions, including making asynchronous
+// calls based on them using the GameClient inside of "thunks."
 const actionFactory = new Actions.ActionFactory(gc);
+
+// EventAdapter that subscribes to messages received by the
+// GameClient, and converts them to redux events.
 const adapter = new EventAdapter(gc, store);
+
+/*
+  Hook up our GameReduxContainer to the store and render.
+*/
+let GameReduxContainer = createContainerComponent(actionFactory);
+ReactDOM.render(
+    <Provider store={store}>
+        <GameReduxContainer/>
+    </Provider>
+    , document.getElementById('root'));
+
+
+// A few variables that are used in the game initalization below.
 let gameId = null;
 let playerId = storage.getItem("playerId");
 let playerName = storage.getItem("playerName");
 
+// When the GameClient connects, either create a game or join a game.
 gc.connect().then(() => {
     if (window.location.hash == '') {
         store.dispatch(actionFactory.playerCreatesGame(playerId));
@@ -55,6 +83,8 @@ gc.connect().then(() => {
     }    
 });
 
+// When the GameClient joins/creates a game, save the information
+// sent out by the server.
 gc.onJoinGame().subscribe((e) => {
     console.log(e);
     gameId = e.action.gameId;
@@ -71,70 +101,7 @@ gc.onJoinGame().subscribe((e) => {
     }
 });
 
-const mapStateToProps = state => {
-    let myPlayerId = playerId;
-
-    let oppWords = Object.entries(state.game.usedWords)
-        .filter(([playerId, words]) => playerId !== myPlayerId)
-        .map(([playerIds, words]) => words)
-        .reduce((acc, cur) => acc.concat(cur), []);
-
-    let inputRPadding = state.game.letters ? state.game.letters.length : 7;
-    let typed = state.player.typed.padEnd(inputRPadding, ' ');
-
-    let players = state.game.playerIds.map((pId) => (
-        {
-            ...(state.game.playerInfo[pId] || {}),
-            playerId: pId,
-            score: state.game.score[pId]
-        }
-    ));
-
-    return {
-        letters: state.player.localLetters || '',
-        typed: typed,
-        myWords: state.requests.acceptedWords.map((aw) => aw.word),
-        oppWords: oppWords,
-        wordCount: state.game.wordCount || [],
-        endTimestamp: state.game.endTimestamp,       
-        myPlayerId: playerId,
-        players: players,
-        maxScore: 10000,
-        gameStatus: state.game.gameStatus,
-        revealedWords: state.game.revealedWords,
-        notifyAccept: state.player.notifyAccept,
-        notifyReject: state.player.notifyReject,
-        lastAccepted: state.player.lastAccepted,
-        lastRejected: state.player.lastRejected
-    }
-}
-  
-  const mapDispatchToProps = dispatch => {
-    return {
-      onStartClick: () => {
-        dispatch(actionFactory.playerPushesStartGame(gameId, playerId));
-      },
-      onRestartClick: () => {
-        dispatch(actionFactory.playerPushesRestartGame(gameId, playerId));
-      },
-      onNameChange: (n) => {
-        storage.setItem("playerName", n);
-        dispatch(actionFactory.requestChangeName(gameId, playerId, n));
-      }
-    }
-  }
-  
-  const HookedUpGame = connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Game)
-
-ReactDOM.render(
-    <Provider store={store}>
-        <HookedUpGame />
-    </Provider>
-, document.getElementById('root'));
-
+// Handle user input and dispatch it as redux actions.
 document.addEventListener("keydown", (e) => {
     if(e.target.tagName === 'BODY' 
         && !e.metaKey
@@ -163,6 +130,6 @@ document.addEventListener("keydown", (e) => {
     }    
 });
 
-localStorage.debug = '*';
-
+// Initialize the GameSound with the stream of redux actions that
+// it responds to.
 let gameSound = new GameSound(reduxActionStream, playerId);
