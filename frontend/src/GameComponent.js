@@ -136,7 +136,7 @@ const GameTopArea = ({ endTimestamp, playerList, myPlayerId, maxScore, gameStatu
 }
 
 const Game = ({letters, typed, myWords, oppWords, wordCount,
-  endTimestamp, players, myPlayerId, gameStatus, onStartClick, 
+  endTimestamp, players, myPlayerId, gameId, gameStatus, onStartClick, 
   onRestartClick, onNameChange, maxScore, revealedWords,
   notifyAccept, notifyReject, lastAccepted, lastRejected}) => {
   
@@ -146,16 +146,20 @@ const Game = ({letters, typed, myWords, oppWords, wordCount,
 
   let middleComponent = undefined;
   if (gameStatus === 'COMPLETED') {
-    middleComponent = <GameOverComponent gameStatus={gameStatus} onRestartClick={onRestartClick} myPlayerId={myPlayerId} playerList={players} />
+    middleComponent = <GameOverComponent gameStatus={gameStatus} 
+      onRestartClick={() => onRestartClick(gameId, myPlayerId)} 
+      myPlayerId={myPlayerId} 
+      playerList={players} />
   } else {
     middleComponent = <GameInputComponent letters={letters} typed={typed} gameStatus={gameStatus}
       notifyAccept={notifyAccept} notifyReject={notifyReject} lastAccepted={lastAccepted}
-      onStartClick={onStartClick} />
+      onStartClick={() => onStartClick(gameId, myPlayerId)} />
   }
 
   return (
     <div className="eggwords">      
-      <GameTopArea endTimestamp={endTimestamp} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus} onNameChange={onNameChange}/>
+      <GameTopArea endTimestamp={endTimestamp} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus} 
+        onNameChange={(newName) => onNameChange(gameId, myPlayerId, newName)}/>
       { middleComponent }
       <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} revealedWords={revealedWords} gameStatus={gameStatus}/>
     </div>
