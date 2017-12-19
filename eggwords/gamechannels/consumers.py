@@ -12,12 +12,12 @@ from gamechannels.game import GameStatus
 from gamechannels.gamealias import create_game_alias, dealias_game
 from gamechannels.models import WordSet
 from gamechannels.gameutils import CustomJsonEncoder
+from gamechannels.gameexceptions import *
 
-json_encoder = CustomJsonEncoder()
 DEFAULT_GAME_LENGTH = 120
 
+json_encoder = CustomJsonEncoder()
 game_service = gameservice.RedisGameService()
-
 re_uuid4 = re.compile('[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}')
 
 def game_group_name(game_id):
@@ -107,29 +107,39 @@ def gamerecv_newgame(message):
 
 @channel_session
 def gamerecv_joingame(message):
-    game_id = message['gameId']
+    game_id_or_alias = message['gameId']
     alias = None
-    if not re_uuid4.match(game_id):
-        alias = game_id
-        game_id = dealias_game(game_id)
-        # TODO: if it doesn't exist ...
+    if not re_uuid4.match(game_id_or_alias):
+        alias = game_id_or_alias
+        try:
+            game_id = dealias_game(alias)
+        except GameAliasNotFound:
+            gamerecv_newgame(message)
+    
     group_name = game_group_name(game_id)
     player_id = message.get("playerId") or uuid.uuid4()
     player_token = message.get("playerToken") or uuid.uuid4()
+
+    try:
+        game_service.add_player(game_id, player_id, player_token)
+    except GameDoesNotExist as e:
+        gamerecv_newgame(message)
+        return
+
     Group(group_name).add(message['reply_channel'])
-    game_service.add_player(game_id, player_id, player_token)
-    message.channel_session["gameId"] = str(game_id)
-    message.channel_session["playerId"] = str(player_id)
+    message.channel_session['gameId'] = str(game_id)
+    message.channel_session['playerId'] = str(player_id)
 
     response = json_encoder.encode({
         'type': 'JoinGameResponse',
+        'success': True,
         'gameId': game_id,
         'alias': alias,
         'playerId': str(player_id),
         'playerToken': str(player_token),
     })
 
-    message.reply_channel.send({"accept": True, "text":response})
+    message.reply_channel.send({'accept': True, 'text':response})
     send_game_state(game_id)
 
     expiry = {

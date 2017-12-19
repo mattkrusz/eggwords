@@ -9,6 +9,7 @@ from gamechannels.score import score_game
 from gamechannels.game import GameStatus, GameState, derive_game_status
 from gamechannels.redismgr import redis_connection
 from gamechannels.gameutils import *
+from gamechannels.gameexceptions import *
 
 r = redis_connection()
 
@@ -32,7 +33,7 @@ class RedisGameService:
 
         existing_game = self.get_game_state(game_id)
         if existing_game.exists():
-            raise Exception(f"Unable to create new game with id [{game_id}] because one already exists.")
+            raise GameAlreadyExists(f"Unable to create new game with id [{game_id}] because one already exists.")
 
         pipe = self.redis.pipeline()
         player_info_map = {host_id: '{}'}
@@ -64,6 +65,10 @@ class RedisGameService:
         '''
         Add a player to the game.
         '''
+
+        game_state = self.get_game_state(game_id)
+        if not game_state.exists():
+            raise GameDoesNotExist(f'Unable to join game with id {game_id} because the game was not found.')
 
         player_id = str(player_id)
         player_token = str(player_token)

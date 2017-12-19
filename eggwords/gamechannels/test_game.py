@@ -12,6 +12,8 @@ from django.utils import timezone
 import gamechannels.gameservice as gameservice
 import gamechannels.score as score_service
 from gamechannels.game import GameState, GameStatus
+import gamechannels.gamealias as gamealias
+from gamechannels.gameexceptions import *
 
 game_service = gameservice.RedisGameService()
 
@@ -189,3 +191,21 @@ def test_player_info(game_id):
     game_service.update_player_name(game_id, p1_id, 'TestName')
     gstate = game_service.get_game_state(game_id)
     assert 'TestName' == gstate.player_info[p1_id]['name']
+
+def test_game_alias(game_id) -> None:
+    p1_id = uuid.uuid4()
+    p1_token = uuid.uuid4()
+
+    game_service.init_game(game_id, p1_id, p1_token)
+    aliased = gamealias.create_game_alias(game_id)
+    dealiased = gamealias.dealias_game(aliased)
+
+    assert str(dealiased) == str(game_id)
+
+def test_game_alias_missing(game_id) -> None:
+    p1_id = uuid.uuid4()
+    p1_token = uuid.uuid4()
+
+    game_service.init_game(game_id, p1_id, p1_token)
+    with pytest.raises(GameAliasNotFound):
+        gamealias.dealias_game('abcdefg')
