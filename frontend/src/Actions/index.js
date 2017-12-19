@@ -30,20 +30,22 @@ export class ActionFactory {
         this.gameClient = gameClient;        
     }
 
-    newGame(gameId, playerId) {
+    newGame(gameId, playerId, playerToken) {
         return {
             type: NEW_GAME,
             gameId: gameId,
             playerId: playerId,
+            playerToken: playerToken,
             receivedAt: Date.now()
           }
     }
 
-    joinGame(gameId, playerId) {
+    joinGame(gameId, playerId, playerToken) {
         return {
             type: NEW_GAME,
             gameId: gameId,
             playerId: playerId,
+            playerToken: playerToken,
             receivedAt: Date.now()
           }
     }
@@ -226,9 +228,9 @@ export class ActionFactory {
         }
     }
 
-    requestChangeName(gameId, playerId, newName) {
+    requestChangeName(gameId, playerId, payerToken, newName) {
         return (dispatch) => {
-            this.gameClient.changeName(gameId, playerId, newName);
+            this.gameClient.changeName(gameId, playerId, payerToken, newName);
             dispatch({
                 type: REQUEST_CHANGE_NAME,
                 gameId: gameId,

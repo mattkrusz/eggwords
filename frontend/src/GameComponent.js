@@ -136,8 +136,8 @@ const GameTopArea = ({ endTimestamp, playerList, myPlayerId, maxScore, gameStatu
 }
 
 const Game = ({letters, typed, myWords, oppWords, wordCount,
-  endTimestamp, players, myPlayerId, gameId, gameStatus, onStartClick, 
-  onRestartClick, onNameChange, maxScore, revealedWords,
+  endTimestamp, players, myPlayerId, myPlayerToken, gameId, gameStatus, 
+  onStartClick, onRestartClick, onNameChange, maxScore, revealedWords,
   notifyAccept, notifyReject, lastAccepted, lastRejected}) => {
   
   let myList = myWords.map((w) => {
@@ -159,7 +159,7 @@ const Game = ({letters, typed, myWords, oppWords, wordCount,
   return (
     <div className="eggwords">      
       <GameTopArea endTimestamp={endTimestamp} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus} 
-        onNameChange={(newName) => onNameChange(gameId, myPlayerId, newName)}/>
+        onNameChange={(newName) => onNameChange(gameId, myPlayerId, myPlayerToken, newName)}/>
       { middleComponent }
       <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} revealedWords={revealedWords} gameStatus={gameStatus}/>
     </div>

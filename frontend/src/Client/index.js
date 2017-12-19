@@ -26,7 +26,7 @@ class GameClient {
         
         let connectPromise = new Promise((resolve, reject) => {
             console.log("Starting connection");
-            this.wsBridge.connect('/ws/game/', undefined, options);
+            this.wsBridge.connect('ws://localhost:8000/ws/game/', undefined, options);
             this.wsBridge.listen(this.listen.bind(this));
             this.wsBridge.socket.addEventListener('open', 
                 () => {
@@ -88,13 +88,14 @@ class GameClient {
         this.send(outbound);
     }
 
-    changeName(gameId, playerId, name) {
+    changeName(gameId, playerId, payerToken, name) {
         console.log("changeName", name);
         let outbound = {
             'gameId': gameId,
             'type': 'change_name',
-            'name': name,
-            'playerId': playerId
+            'playerToken': payerToken,
+            'playerId': playerId,
+            'name': name           
         };
         this.send(outbound);        
     }

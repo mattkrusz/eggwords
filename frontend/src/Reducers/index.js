@@ -83,6 +83,7 @@ function player(
         case ActionTypes.JOIN_GAME:
             return Object.assign({}, state, {
                 playerId: action.playerId,
+                playerToken: action.playerToken
             });
             break;
         case ActionTypes.REINITIALIZE_GAME:

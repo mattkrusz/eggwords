@@ -247,8 +247,15 @@ def gamerecv_change_name(message):
     game_id = message['gameId']
     group_name = game_group_name(game_id)
     player_id = message['playerId']
+    player_token = message['playerToken']
     name = message['name']
-    game_service.update_player_name(game_id, player_id, name)
+    
+    try:
+        game_service.update_player_name(game_id, player_id, name, player_token)
+    except UnauthorizedAction:
+        # TODO - Notify of failure.
+        return
+
     response = {
         'type': 'PlayerInfoUpdate',
         'gameId': game_id,

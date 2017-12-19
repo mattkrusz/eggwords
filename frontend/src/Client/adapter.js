@@ -10,14 +10,14 @@ export default class EventAdapter {
         this.gameStream
             .filter((e) => e.action.type === 'NewGameResponse')
             .subscribe((e) => {
-                let newGameAction = this.actionFactory.newGame(e.action.gameId, e.action.playerId);
+                let newGameAction = this.actionFactory.newGame(e.action.gameId, e.action.playerId, e.action.playerToken);
                 this.store.dispatch(newGameAction);
             });
 
         this.gameStream
             .filter((e) => e.action.type === 'JoinGameResponse')
             .subscribe((e) => {
-                let joinGameAction = this.actionFactory.joinGame(e.action.gameId, e.action.playerId);
+                let joinGameAction = this.actionFactory.joinGame(e.action.gameId, e.action.playerId, e.action.playerToken);
                 this.store.dispatch(joinGameAction);
             });
 

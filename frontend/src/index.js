@@ -72,6 +72,7 @@ ReactDOM.render(
 let gameId = null;
 let playerId = storage.getItem("playerId");
 let playerName = storage.getItem("playerName");
+let playerToken = storage.getItem("playerToken");
 
 // When the GameClient connects, either create a game or join a game.
 gc.connect().then(() => {
@@ -89,7 +90,9 @@ gc.onJoinGame().subscribe((e) => {
     console.log(e);
     gameId = e.action.gameId;
     playerId = e.action.playerId;
+    playerToken = e.action.playerToken;
     storage.setItem("playerId", playerId)
+    storage.setItem("playerToken", playerToken)
     if (e.action.alias != undefined) {
         window.history.pushState(null, null, '#' + e.action.alias);
     } else {
@@ -97,7 +100,7 @@ gc.onJoinGame().subscribe((e) => {
     }
     
     if (playerName != null) {
-        store.dispatch(actionFactory.requestChangeName(gameId, playerId, playerName));
+        store.dispatch(actionFactory.requestChangeName(gameId, playerId, playerToken, playerName));
     }
 });
 

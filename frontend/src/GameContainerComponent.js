@@ -39,6 +39,7 @@ function createContainerComponent(actionFactory) {
             endTimestamp: state.game.endTimestamp,
             gameId: state.game.gameId,
             myPlayerId: myPlayerId,
+            myPlayerToken: state.player.playerToken,
             players: players,
             maxScore: 10000,
             gameStatus: state.game.gameStatus,
@@ -58,9 +59,9 @@ function createContainerComponent(actionFactory) {
             onRestartClick: (gameId, playerId) => {
                 dispatch(actionFactory.playerPushesRestartGame(gameId, playerId));
             },
-            onNameChange: (gameId, playerId, n) => {
+            onNameChange: (gameId, playerId, playerToken, n) => {
                 storage.setItem("playerName", n);
-                dispatch(actionFactory.requestChangeName(gameId, playerId, n));
+                dispatch(actionFactory.requestChangeName(gameId, playerId, playerToken, n));
             }
         }
     }
