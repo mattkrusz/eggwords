@@ -270,15 +270,23 @@ class RedisGameService:
             pipe.delete(k)
         pipe.execute()
 
-    def update_player_name(self, game_id, player_id, new_name):
+    def update_player_name(self, game_id = None, player_id = None, new_name = None, player_token = None):
         '''
         Update a player's name.
         '''
+        if not game_id or not player_id:
+            raise ValueError(f"Missing required parameter to update_player_name: [game_id = {game_id}] [player_id = {player_id}]")
+
         game_state = self.get_game_state(game_id)
         if not game_state.exists():
-            raise GameDoesNotExist(f'Unable to update player info in game with id {game_id} because no game with that id exists.')
-            
+            raise GameDoesNotExist(f'Unable to update player info in game with id {game_id} because no game with that id exists.')           
+
         keys = RedisGameKeyIndex(game_id)
+
+        player_key = self.redis.hget(keys.player_tokens_key(), player_id)
+        if str(player_key) != str(player_token):
+            raise UnauthorizedAction(f'Request not authorized to change player info for player with id {player_id}.')
+
         player_info = json.loads(r.hget(keys.game_players_key(), player_id))
         player_info['name'] = new_name
         self.redis.hset(keys.game_players_key(), player_id, json.dumps(player_info))

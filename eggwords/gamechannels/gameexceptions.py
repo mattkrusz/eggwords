@@ -12,3 +12,6 @@ class GameAliasNotFound(Eggception):
 
 class GameStatusException(Eggception):
     pass
+
+class UnauthorizedAction(Eggception):
+    pass

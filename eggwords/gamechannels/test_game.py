@@ -188,9 +188,20 @@ def test_player_info(game_id):
     p1_token = uuid.uuid4()
 
     game_service.init_game(game_id, p1_id, p1_token)
-    game_service.update_player_name(game_id, p1_id, 'TestName')
+    game_service.update_player_name(game_id, p1_id, 'TestName', p1_token)
     gstate = game_service.get_game_state(game_id)
     assert 'TestName' == gstate.player_info[p1_id]['name']
+
+
+def test_player_info_unauthorized(game_id):
+    p1_id = uuid.uuid4()
+    p1_token = uuid.uuid4()
+
+    game_service.init_game(game_id, p1_id, p1_token)
+    with pytest.raises(UnauthorizedAction):
+        game_service.update_player_name(game_id, p1_id, 'TestName', None)
+    with pytest.raises(UnauthorizedAction):
+        game_service.update_player_name(game_id, p1_id, 'TestName', uuid.uuid4())
 
 def test_game_alias(game_id) -> None:
     p1_id = uuid.uuid4()
