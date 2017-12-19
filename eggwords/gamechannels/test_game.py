@@ -209,3 +209,17 @@ def test_game_alias_missing(game_id) -> None:
     game_service.init_game(game_id, p1_id, p1_token)
     with pytest.raises(GameAliasNotFound):
         gamealias.dealias_game('abcdefg')
+
+def test_start_missing_game(game_id) -> None:
+    with pytest.raises(GameDoesNotExist):
+        game_service.start_game(game_id, TEST_WORDS)
+
+def test_double_start_game(game_id) -> None:
+    p1_id = uuid.uuid4()
+    p1_token = uuid.uuid4()
+
+    game_service.init_game(game_id, p1_id, p1_token)
+    game_service.start_game(game_id, TEST_WORDS)
+
+    with pytest.raises(GameStatusException):
+        game_service.start_game(game_id, TEST_WORDS)

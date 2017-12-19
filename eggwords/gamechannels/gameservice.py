@@ -2,6 +2,7 @@
 import dateutil.parser
 from datetime import datetime, timedelta
 import json, uuid, random, collections
+from functools import wraps
 
 from django.utils import timezone
 
@@ -114,8 +115,13 @@ class RedisGameService:
         The game length (seconds) controls how long the game lasts after the start time.
         '''
 
-        if self.get_game_status(game_id) not in [GameStatus.WAITING, GameStatus.SCHEDULED]:
-            return False
+        game_state = self.get_game_state(game_id)
+        if not game_state.exists():
+            raise GameDoesNotExist(f'Unable to start game with id {game_id} because no game with that id exists.')
+
+        game_status = self.get_game_status(game_id)
+        if game_status not in [GameStatus.WAITING, GameStatus.SCHEDULED]:
+            raise GameStatusException(f'Unable to start game with id {game_id} because the game currently has status {game_status}.')
 
         word_set = set(words)
 
@@ -268,6 +274,10 @@ class RedisGameService:
         '''
         Update a player's name.
         '''
+        game_state = self.get_game_state(game_id)
+        if not game_state.exists():
+            raise GameDoesNotExist(f'Unable to update player info in game with id {game_id} because no game with that id exists.')
+            
         keys = RedisGameKeyIndex(game_id)
         player_info = json.loads(r.hget(keys.game_players_key(), player_id))
         player_info['name'] = new_name

@@ -153,23 +153,31 @@ def gamerecv_start_game(message):
     word_set = WordSet.objects.random()
     words = [w.word for w in word_set.words.all()]
     game_seconds = DEFAULT_GAME_LENGTH
-    did_start = game_service.start_game(game_id, words, length = game_seconds)
 
-    if did_start:
-        delayed_message = {
-            'channel': 'game.end',
-            'content': {'gameId': str(game_id)},
-            'delay': (game_seconds+1) * 1000
-        }
-        Channel('asgi.delay').send(delayed_message, immediately=True)
+    try:
+        game_service.start_game(game_id, words, length = game_seconds)
+    except GameStatusException as e:
+        response = json_encoder.encode({
+            'type': 'StartGameResponse',
+            'success': False,
+        })
+        message.reply_channel.send({'text': response})
+        return
+    
+    delayed_message = {
+        'channel': 'game.end',
+        'content': {'gameId': str(game_id)},
+        'delay': (game_seconds * 1000) + 100
+    }
+    Channel('asgi.delay').send(delayed_message, immediately=True)
 
-        send_game_state(game_id)
+    send_game_state(game_id)
 
-        expiry = {
-            'gameId': str(game_id),
-            'expire_after_seconds': 120 + game_seconds
-        }
-        Channel('game.expire').send(expiry)
+    expiry = {
+        'gameId': str(game_id),
+        'expire_after_seconds': 120 + game_seconds
+    }
+    Channel('game.expire').send(expiry)
 
 def gamerecv_submit_word(message):
     game_id = message['gameId']

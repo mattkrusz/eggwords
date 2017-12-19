@@ -9,3 +9,6 @@ class GameDoesNotExist(Eggception):
 
 class GameAliasNotFound(Eggception):
     pass
+
+class GameStatusException(Eggception):
+    pass
