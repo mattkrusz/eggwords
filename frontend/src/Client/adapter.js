@@ -17,8 +17,15 @@ export default class EventAdapter {
         this.gameStream
             .filter((e) => e.action.type === 'JoinGameResponse')
             .subscribe((e) => {
-                let joinGameAction = this.actionFactory.joinGame(e.action.gameId, e.action.playerId, e.action.playerToken);
-                this.store.dispatch(joinGameAction);
+                if (e.action.success) {
+                    let joinGameAction = this.actionFactory.joinGame(e.action.gameId, 
+                        e.action.playerId, e.action.playerToken);
+                    this.store.dispatch(joinGameAction);     
+                } else {
+                    let joinGameError = this.actionFactory.joinGameError(e.action.gameId, 
+                        e.action.playerId, e.action.playerToken, e.action.message);
+                    this.store.dispatch(joinGameError);
+                }   
             });
 
         this.gameStateStream = this.gameStream

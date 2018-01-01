@@ -197,12 +197,28 @@ function requests (
       default:
         return state;
     }
-}  
+}
+
+function errors (
+    state = {
+        JOIN_GAME_ERROR: null
+    }, action
+) {
+    switch (action.type) {
+        case ActionTypes.JOIN_GAME_ERROR:
+            return { ...state, joinGameError: action.message } ;
+        case ActionTypes.JOIN_GAME:
+            return { ...state, joinGameError: null };            
+        default:
+            return state;
+    }
+}
 
 const rootReducer = combineReducers({
     game,
     player,
-    requests
+    requests,
+    errors
 });
 
 export default rootReducer;

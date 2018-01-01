@@ -1,6 +1,7 @@
 
 export const NEW_GAME = 'NEW_GAME';
 export const JOIN_GAME = 'JOIN_GAME';
+export const JOIN_GAME_ERROR = 'JOIN_GAME_ERROR';
 export const UPDATE_GAME_STATE = 'UPDATE_GAME_STATE';
 export const REINITIALIZE_GAME = 'REINITIALIZE_GAME';
 export const RECEIVE_GAME_STATE  = 'RECEIVE_GAME_STATE ';
@@ -48,6 +49,17 @@ export class ActionFactory {
             playerToken: playerToken,
             receivedAt: Date.now()
           }
+    }
+
+    joinGameError(gameId, playerId, playerToken, message) {
+        return {
+            type: JOIN_GAME_ERROR,
+            gameId: gameId,
+            playerId: playerId,
+            playerToken: playerToken,
+            message: message,
+            receivedAt: Date.now()
+        }
     }
 
     enterLetter(letter) {

@@ -48,7 +48,8 @@ function createContainerComponent(actionFactory) {
             notifyAccept: state.player.notifyAccept,
             notifyReject: state.player.notifyReject,
             lastAccepted: state.player.lastAccepted,
-            lastRejected: state.player.lastRejected
+            lastRejected: state.player.lastRejected,
+            joinGameError: state.errors.joinGameError
         }
     }
 

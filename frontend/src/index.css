@@ -19,6 +19,10 @@ div {
   /* border: 1px solid black; */
 }
 
+a {
+  color: aliceblue;
+}
+
 .eggwords {
   margin: 1em auto;  
   max-width: 800px;
@@ -296,6 +300,7 @@ span.expiredmsg {
     color: #fef665;
 }
 
-span.expiredmsg a {
-  color: aliceblue;
+.errorMessage {
+  color: #fd8484;
+  font-size: .75em;
 }

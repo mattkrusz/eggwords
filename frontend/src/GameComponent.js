@@ -178,7 +178,7 @@ class Game extends Component {
     let { letters, typed, myWords, oppWords, wordCount,
       endTimestamp, expireTimestamp, players, myPlayerId, myPlayerToken, gameId,
       gameStatus, onStartClick, onRestartClick, onNameChange, maxScore, revealedWords,
-      notifyAccept, notifyReject, lastAccepted, lastRejected } = this.props;
+      notifyAccept, notifyReject, lastAccepted, lastRejected, joinGameError } = this.props;
 
     let myList = myWords.map((w) => {
       return <li key={w}>{w}</li>
@@ -202,6 +202,7 @@ class Game extends Component {
         <GameTopArea endTimestamp={endTimestamp} myPlayerId={myPlayerId} playerList={players} 
           maxScore={maxScore} gameStatus={gameStatus}
           onNameChange={(newName) => onNameChange(gameId, myPlayerId, myPlayerToken, newName)} />
+        {joinGameError != null ? <div className="errorMessage">{joinGameError} Click <a href="/">here</a> to start a new game.</div> : "" }
         {middleComponent}
         <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} revealedWords={revealedWords} gameStatus={gameStatus} />
       </div>
