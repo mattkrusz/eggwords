@@ -24,13 +24,13 @@ class GameClient {
             options.constructor = wsConstructor;
         }
         
-        let connectPromise = new Promise((resolve, reject) => {
-            console.log("Starting connection");
-            this.wsBridge.connect('/ws/game/', undefined, options);
+        let connectPromise = new Promise((resolve, reject) => {   
+            let wsAddr = process.env.REACT_APP_WEBSOCKET_ADDRESS;
+            this.wsBridge.connect(wsAddr, undefined, options);
             this.wsBridge.listen(this.listen.bind(this));
             this.wsBridge.socket.addEventListener('open', 
                 () => {
-                    console.log("Opened");
+                    console.log("Websocket Connection Open");
                     resolve();
                 });
         });
