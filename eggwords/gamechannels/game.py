@@ -22,11 +22,12 @@ class GameState:
                  game_id: Union[uuid.UUID, str],
                  player_info: Mapping[Union[uuid.UUID, str], Mapping],
                  used_words: Mapping[str, Union[uuid.UUID, str]],
-                 start_time: str,      # isoformat
-                 end_time: str,        # isoformat
-                 created_time: str,    # isoformat
-                 letters: str,         # e.g., 'spiders'
-                 word_count: List[int] # e.g., [0,0,0,3,4,5,6,7]
+                 start_time: str,       # isoformat
+                 end_time: str,         # isoformat
+                 created_time: str,     # isoformat
+                 letters: str,          # e.g., 'spiders'
+                 word_count: List[int], # e.g., [0,0,0,3,4,5,6,7],
+                 expire_time: str,      #isoformat
                 ) -> None:
 
         self.game_id = self._ensure_UUID(game_id)
@@ -41,6 +42,7 @@ class GameState:
         self.start_time = start_time
         self.end_time = end_time
         self.created_time = created_time
+        self.expire_time = expire_time
         self.letters = letters
         self.word_count = word_count
 
@@ -74,6 +76,7 @@ class GameState:
             'wordCount': self.word_count,
             'startTime': self.start_time,
             'endTime': self.end_time,
+            'expireTime': self.expire_time,
             'letters': self.letters,
             'gameStatus': self.status_at_time().name,
             'score': {str(k):v for (k, v) in self.score().items()}

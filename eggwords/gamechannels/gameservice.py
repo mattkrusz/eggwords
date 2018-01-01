@@ -153,12 +153,14 @@ class RedisGameService:
 
         return True
 
-    def set_expiry(self, game_id, seconds):
+    def set_expire(self, game_id, seconds):
         '''
         Set the game state to expire from memory in the future.
         '''
+        expire_at = timezone.now() + timedelta(seconds=seconds)
         keys = RedisGameKeyIndex(game_id)
         pipe = self.redis.pipeline()
+        pipe.set(keys.expire_time_key(), expire_at.isoformat())
         for key in keys:
             pipe.expire(key, seconds)
         pipe.execute()
@@ -179,8 +181,9 @@ class RedisGameService:
         pipe.get(keys.game_start_key())
         pipe.get(keys.game_end_key())
         pipe.get(keys.game_created_key())
-        pipe.get(keys.game_letters_key())
+        pipe.get(keys.game_letters_key())       
         pipe.lrange(keys.game_wc_key(), 0, -1)
+        pipe.get(keys.expire_time_key())
         res = pipe.execute()
 
         player_info = res[0]
@@ -197,7 +200,8 @@ class RedisGameService:
             res[3],
             res[4],
             res[5],
-            word_count
+            word_count,
+            res[7]
         )
 
 
@@ -309,6 +313,7 @@ class RedisGameKeyIndex:
         'player_key': '{game_key}:players',
         'used_words_set_key': '{game_key}:usedwords',
         'player_tokens_key': '{game_key}:tokens',
+        'expire_time_key': '{game_key}:expire_time',
     }
     
     def __init__(self, game_id):
@@ -359,6 +364,9 @@ class RedisGameKeyIndex:
 
     def player_tokens_key(self):
         return self.__key__('player_tokens_key')
+
+    def expire_time_key(self):
+        return self.__key__('expire_time_key')
 
     def __iter__(self):
         for key_name in self.keys.keys():

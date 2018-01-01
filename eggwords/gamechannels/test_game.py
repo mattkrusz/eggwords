@@ -154,7 +154,7 @@ def test_score() -> None:
     assert score1[p1_id] > score1[p2_id]
 
 def test_expire(game_id):
-    game_service.set_expiry(game_id, 180)
+    game_service.set_expire(game_id, 180)
 
 def test_get_missing_game():
     game_state = game_service.get_game_state(uuid.uuid4())

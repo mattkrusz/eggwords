@@ -99,11 +99,11 @@ def gamerecv_newgame(message):
     message.channel_session["playerId"] = str(player_id)
     send_game_state(game_id)
 
-    expiry = {
+    expire = {
         'gameId': str(game_id),
         'expire_after_seconds': 600
     }
-    Channel('game.expire').send(expiry)
+    Channel('game.expire').send(expire)
 
 @channel_session
 def gamerecv_joingame(message):
@@ -142,11 +142,11 @@ def gamerecv_joingame(message):
     message.reply_channel.send({'accept': True, 'text':response})
     send_game_state(game_id)
 
-    expiry = {
+    expire = {
         'gameId': str(game_id),
         'expire_after_seconds': 600
     }
-    Channel('game.expire').send(expiry)
+    Channel('game.expire').send(expire)
 
 def gamerecv_start_game(message):
     game_id = message['gameId']
@@ -173,11 +173,11 @@ def gamerecv_start_game(message):
 
     send_game_state(game_id)
 
-    expiry = {
+    expire = {
         'gameId': str(game_id),
         'expire_after_seconds': 120 + game_seconds
     }
-    Channel('game.expire').send(expiry)
+    Channel('game.expire').send(expire)
 
 def gamerecv_submit_word(message):
     game_id = message['gameId']
@@ -201,7 +201,7 @@ def gamerecv_submit_word(message):
 def gamerecv_expire_game(message):
     game_id = message['gameId']
     expire_after_seconds =  message.get('expire_after_seconds', 120)
-    game_service.set_expiry(game_id, expire_after_seconds)
+    game_service.set_expire(game_id, expire_after_seconds)
 
 
 def gamerecv_end_game(message):
@@ -212,7 +212,7 @@ def gamerecv_end_game(message):
     if game_state.status() == GameStatus.COMPLETED:
         send_game_state(game_id)
         send_reveal_words(game_id)
-        game_service.set_expiry(game_id, 120)
+        game_service.set_expire(game_id, 120)
     elif attempt_num < 9:
         delayed_message = {
             'channel': 'game.end',
