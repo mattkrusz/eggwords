@@ -215,7 +215,11 @@ class RedisGameService:
         end = res[1]
         return derive_game_status(start, end)
     
-    def _init_try_word_script(self):      
+    def _init_try_word_script(self):
+        '''
+        Initializes the redis server-side script that atomically checks-and-claims a word.
+        '''  
+
         lua_script = '''
             local stime = redis.call('GET', KEYS[3])
             local etime = redis.call('GET', KEYS[4])
