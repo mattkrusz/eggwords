@@ -19,8 +19,8 @@ const GameOverComponent = ({ gameStatus, gameExpired, onRestartClick, myPlayerId
     return <div className="gameover">
         <h1 className={wonMultiplayer ? "victory" : ""}>{msg}</h1>
             {
-                gameExpired ? <button id="restartbutton" onClick={onRestartClick}>New Game</button>
-                    : <span className="expiredmsg">This game has expired. Click <a href="/">here</a> to start a new game.</span>
+                gameExpired ? <span className="expiredmsg">This game has expired. Click <a href="/">here</a> to start a new game.</span> 
+                    : <button id="restartbutton" onClick={onRestartClick}>New Game</button>
             }
         </div>
 };
