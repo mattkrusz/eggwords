@@ -15,10 +15,7 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
-from demofrontend.views import Game
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^', Game.as_view()),
-    url(r'^/', Game.as_view()),
 ]
