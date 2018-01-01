@@ -14,6 +14,8 @@ from gamechannels.gameexceptions import *
 
 r = redis_connection()
 
+MAX_PLAYERS = 5
+
 class RedisGameService:
     '''
     GameService that creates/reads the game state in/from redis, and provides methods
@@ -71,6 +73,13 @@ class RedisGameService:
         if not game_state.exists():
             raise GameDoesNotExist(f'Unable to join game with id {game_id} because the game was not found.')
 
+        # TODO - Check if the player is already here. If so, must have token.
+        
+        keys = RedisGameKeyIndex(game_id)
+        n_players = self.redis.hlen(keys.game_players_key())
+        if n_players >= MAX_PLAYERS:
+            raise GameFull("The game could not be joined because it is full.")
+
         player_id = str(player_id)
         player_token = str(player_token)
 
@@ -80,8 +89,7 @@ class RedisGameService:
         player_info = {
             'name': name
         }
-
-        keys = RedisGameKeyIndex(game_id)
+       
         pipe = self.redis.pipeline()
         pipe.hset(keys.game_players_key(), player_id, json.dumps(player_info))
         pipe.hset(keys.player_tokens_key(),player_id, player_token)

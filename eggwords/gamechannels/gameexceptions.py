@@ -15,3 +15,6 @@ class GameStatusException(Eggception):
 
 class UnauthorizedAction(Eggception):
     pass
+
+class GameFull(Eggception):
+    pass

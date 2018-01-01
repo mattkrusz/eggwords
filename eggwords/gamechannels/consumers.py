@@ -125,6 +125,17 @@ def gamerecv_joingame(message):
     except GameDoesNotExist as e:
         gamerecv_newgame(message)
         return
+    except GameFull as e:
+        response = json_encoder.encode({
+            'type': 'JoinGameResponse',
+            'success': False,
+            'message': str(e),
+            'gameId': game_id,
+            'alias': alias,
+            'playerId': str(player_id),
+        })
+        message.reply_channel.send({'text': response})
+        return
 
     Group(group_name).add(message['reply_channel'])
     message.channel_session['gameId'] = str(game_id)
@@ -139,7 +150,7 @@ def gamerecv_joingame(message):
         'playerToken': str(player_token),
     })
 
-    message.reply_channel.send({'accept': True, 'text':response})
+    message.reply_channel.send({'text':response})
     send_game_state(game_id)
 
     expire = {
