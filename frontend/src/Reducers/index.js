@@ -42,6 +42,9 @@ function game (
         if (action.gameState.endTime != null) {
             newState.endTimestamp = Date.parse(action.gameState.endTime)
         }
+        if (action.gameState.expireTime != null) {
+            newState.expireTimestamp = Date.parse(action.gameState.expireTime)
+        }
         return newState;
         break;
       case ActionTypes.UPDATE_PLAYER_INFO:
@@ -69,6 +72,8 @@ function game (
 function player(
     state = {
         playerId: null,
+        playerToken: null,
+        playerName: null,
         typed: '',
         localLetters: null,
         notifyAccept: false,
@@ -140,7 +145,11 @@ function player(
             return { ...state, 
                 notifyAccept: false,
                 notifyReject: false
-            }            
+            }
+        case ActionTypes.REQUEST_CHANGE_NAME:
+            return {  ...state,
+                playerName: action.name
+            }
         default:
             return state;
     }
