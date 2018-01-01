@@ -125,7 +125,13 @@ const GameScoreList = ({playerList, myPlayerId, maxScore, onNameChange}) => {
     </div>
   </div>)
 
-  return <div className="score-list">{scoreList}</div>
+  let multiplayerInstructions = playerList.length == 1 ?
+    <span className="multiplayer-instructions">Share the game URL to invite another player!</span> : '';
+
+  return <div className="score-list">
+    {scoreList}
+    {multiplayerInstructions}
+  </div>
 }
 
 const GameTopArea = ({ endTimestamp, playerList, myPlayerId, maxScore, gameStatus, onNameChange}) => {

@@ -285,3 +285,8 @@ div {
 .gameover h1.victory {
   color: gold;
 }
+
+span.multiplayer-instructions {
+  font-size: .8em;
+  color: aliceblue;
+}
