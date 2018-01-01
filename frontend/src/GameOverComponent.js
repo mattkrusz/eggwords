@@ -1,7 +1,7 @@
 
 import React, { Component } from 'react';
 
-const GameOverComponent = ({ gameStatus, onRestartClick, myPlayerId, playerList }) => {
+const GameOverComponent = ({ gameStatus, gameExpired, onRestartClick, myPlayerId, playerList }) => {
 
     let msg = "Game over!";
     let wonMultiplayer = false;
@@ -15,10 +15,13 @@ const GameOverComponent = ({ gameStatus, onRestartClick, myPlayerId, playerList 
             msg = "You won!"
         }
     }
-    
+
     return <div className="gameover">
         <h1 className={wonMultiplayer ? "victory" : ""}>{msg}</h1>
-            <button id="restartbutton" onClick={onRestartClick}>New Game</button>
+            {
+                gameExpired ? <button id="restartbutton" onClick={onRestartClick}>New Game</button>
+                    : <span className="expiredmsg">This game has expired. Click <a href="/">here</a> to start a new game.</span>
+            }
         </div>
 };
 

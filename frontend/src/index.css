@@ -290,3 +290,12 @@ span.multiplayer-instructions {
   font-size: .8em;
   color: aliceblue;
 }
+
+span.expiredmsg {
+    font-size: .5em;
+    color: #fef665;
+}
+
+span.expiredmsg a {
+  color: aliceblue;
+}

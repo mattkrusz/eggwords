@@ -141,35 +141,72 @@ const GameTopArea = ({ endTimestamp, playerList, myPlayerId, maxScore, gameStatu
   </div>
 }
 
-const Game = ({letters, typed, myWords, oppWords, wordCount,
-  endTimestamp, players, myPlayerId, myPlayerToken, gameId, gameStatus, 
-  onStartClick, onRestartClick, onNameChange, maxScore, revealedWords,
-  notifyAccept, notifyReject, lastAccepted, lastRejected}) => {
-  
-  let myList = myWords.map((w) => {
-    return <li key={w}>{w}</li>
-  })
+class Game extends Component {
+  constructor(props) {
+    super(props);
 
-  let middleComponent = undefined;
-  if (gameStatus === 'COMPLETED') {
-    middleComponent = <GameOverComponent gameStatus={gameStatus} 
-      onRestartClick={() => onRestartClick(gameId, myPlayerId)} 
-      myPlayerId={myPlayerId} 
-      playerList={players} />
-  } else {
-    middleComponent = <GameInputComponent letters={letters} typed={typed} gameStatus={gameStatus}
-      notifyAccept={notifyAccept} notifyReject={notifyReject} lastAccepted={lastAccepted}
-      onStartClick={() => onStartClick(gameId, myPlayerId)} />
+    this.state = {
+      gameExpired: false,
+      intervalId: null
+    }
   }
 
-  return (
-    <div className="eggwords">      
-      <GameTopArea endTimestamp={endTimestamp} myPlayerId={myPlayerId} playerList={players} maxScore={maxScore} gameStatus={gameStatus} 
-        onNameChange={(newName) => onNameChange(gameId, myPlayerId, myPlayerToken, newName)}/>
-      { middleComponent }
-      <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} revealedWords={revealedWords} gameStatus={gameStatus}/>
-    </div>
-  )
+  isExpired() {
+    let timeLeft = (this.props.expireTimestamp - (new Date()).getTime());
+    return timeLeft < 0;
+  }
+
+  checkExpired() {
+    let expired = this.isExpired();
+    if (expired && !this.state.gameExpired) {
+      this.setState({gameExpired: true});
+    } else if (!expired && this.state.gameExpired) {
+      this.setState({gameExpired: false});
+    }
+  }
+
+  componentDidMount() {
+    let intervalId = setInterval(() => this.checkExpired(), 1000);
+    this.setState({ intervalId: intervalId });
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.state.intervalId);
+  }
+
+  render() {
+    let { letters, typed, myWords, oppWords, wordCount,
+      endTimestamp, expireTimestamp, players, myPlayerId, myPlayerToken, gameId,
+      gameStatus, onStartClick, onRestartClick, onNameChange, maxScore, revealedWords,
+      notifyAccept, notifyReject, lastAccepted, lastRejected } = this.props;
+
+    let myList = myWords.map((w) => {
+      return <li key={w}>{w}</li>
+    })
+
+    let middleComponent = undefined;
+    if (gameStatus === 'COMPLETED') {
+      middleComponent = <GameOverComponent gameStatus={gameStatus}
+        gameExpired={this.state.gameExpired}
+        onRestartClick={() => onRestartClick(gameId, myPlayerId)}
+        myPlayerId={myPlayerId}
+        playerList={players} />
+    } else {
+      middleComponent = <GameInputComponent letters={letters} typed={typed} gameStatus={gameStatus}
+        notifyAccept={notifyAccept} notifyReject={notifyReject} lastAccepted={lastAccepted}
+        onStartClick={() => onStartClick(gameId, myPlayerId)} />
+    }
+
+    return (
+      <div className="eggwords">                
+        <GameTopArea endTimestamp={endTimestamp} myPlayerId={myPlayerId} playerList={players} 
+          maxScore={maxScore} gameStatus={gameStatus}
+          onNameChange={(newName) => onNameChange(gameId, myPlayerId, myPlayerToken, newName)} />
+        {middleComponent}
+        <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} revealedWords={revealedWords} gameStatus={gameStatus} />
+      </div>
+    )
+  }
 }
 
 Game.propTypes = {
@@ -180,7 +217,6 @@ Game.defaultProps = {
   myWords: [],
   oppWords: [],
   wordCount: [],
-  timeRemaining: null,
   players: [],
   myPlayerId: null,
   gameStatus: 'WAITING',

@@ -37,6 +37,7 @@ function createContainerComponent(actionFactory) {
             oppWords: oppWords,
             wordCount: state.game.wordCount || [],
             endTimestamp: state.game.endTimestamp,
+            expireTimestamp: state.game.expireTimestamp,
             gameId: state.game.gameId,
             myPlayerId: myPlayerId,
             myPlayerToken: state.player.playerToken,
