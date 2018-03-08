@@ -2,7 +2,7 @@
 
 Eggwords is a multiplayer word-unscrambling game designed to let you easily challenge a friend. The backend is a Python 3 app built with Django Channels and Redis, and the frontend is React/Redux. 
 
-Give it a try at [www.eggwords.com](www.eggwords.com)!
+Give it a try at [www.eggwords.com](https://www.eggwords.com)!
 
 <img src="screenshots/demo.gif" height=200px />
 
