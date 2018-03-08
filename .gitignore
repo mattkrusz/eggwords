@@ -114,3 +114,5 @@ frontend/.storybook/
 
 dev_settings.py
 deploy_settings.py
+
+.pytest_cache
