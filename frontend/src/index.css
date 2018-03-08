@@ -15,10 +15,6 @@ html {
   box-sizing: inherit;
 }
 
-div {
-  /* border: 1px solid black; */
-}
-
 a {
   color: aliceblue;
 }
@@ -26,7 +22,9 @@ a {
 .eggwords {
   margin: 1em auto;  
   max-width: 800px;
-  height: 100vh;
+  height: 95vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .game-input {
@@ -303,4 +301,17 @@ span.expiredmsg {
 .errorMessage {
   color: #fd8484;
   font-size: .75em;
+}
+
+.gameinstructions {
+  color: white;
+  font-size: .6em;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.gameinstructions ul {
+  list-style-type: none;
+  margin-top: auto;
 }

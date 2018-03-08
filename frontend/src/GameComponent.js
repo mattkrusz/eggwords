@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { RIEToggle, RIEInput, RIETextArea, RIENumber, RIETags, RIESelect } from 'riek';
+import GameInstructions from './GameInstructions';
 import GameInputComponent from './GameInputComponent';
 import GameOverComponent from './GameOverComponent';
 import CountdownTimer from './Timer';
@@ -82,9 +83,10 @@ let trim = (s, len = 15) => {
 }
 
 
-
+/**
+ * Wrapper around RIEInput that prevents the component from refreshing unnecessarily.
+ */
 class RieWrapper extends React.Component {
-
   constructor(props) {
     super(props);
   }
@@ -95,16 +97,8 @@ class RieWrapper extends React.Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    // https://reactjs.org/docs/react-component.html#shouldcomponentupdate
-
-    // This is a hack to prevent the editable component from refreshing (and losing the input ref) every
-    // time the parent does.
-
-    // I'm only using this component temporarily, so I'm not too worried about the drawbacks here.
-
     return this.props.value !== nextProps.value;
   }
-
 }
 
 
@@ -205,6 +199,7 @@ class Game extends Component {
         {joinGameError != null ? <div className="errorMessage">{joinGameError} Click <a href="/">here</a> to start a new game.</div> : "" }
         {middleComponent}
         <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} revealedWords={revealedWords} gameStatus={gameStatus} />
+        <GameInstructions />
       </div>
     )
   }
