@@ -117,7 +117,8 @@ def test_score() -> None:
         (timezone.now() + timedelta(seconds=45)).isoformat(),
         (timezone.now() - timedelta(seconds=70)).isoformat(),
         'spiders',
-        TEST_WORD_COUNT
+        TEST_WORD_COUNT,
+        (timezone.now() + timedelta(minutes=10)).isoformat()
     )
 
     score0 = score_service.score_game(game_state0)
@@ -147,7 +148,8 @@ def test_score() -> None:
         (timezone.now() + timedelta(seconds=45)).isoformat(),
         (timezone.now() - timedelta(seconds=70)).isoformat(),
         'spiders',
-        TEST_WORD_COUNT
+        TEST_WORD_COUNT,
+        (timezone.now() + timedelta(minutes=10)).isoformat()
     )
 
     score1 = score_service.score_game(game_state1)
