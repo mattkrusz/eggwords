@@ -44,7 +44,7 @@ a {
 .game-letter {
   width: 1em;
   text-align: center;
-  color: gray;
+  color: #1ac6ff;
 }
 
 .game-letter.accept {
@@ -314,4 +314,8 @@ span.expiredmsg {
 .gameinstructions ul {
   list-style-type: none;
   margin-top: auto;
+}
+
+.gameinstructions em {
+  color: #00ff2f;
 }
