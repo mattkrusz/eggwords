@@ -115,7 +115,7 @@ def gamerecv_joingame(message):
             game_id = dealias_game(alias)
         except GameAliasNotFound:
             gamerecv_newgame(message)
-    
+
     group_name = game_group_name(game_id)
     player_id = message.get("playerId") or uuid.uuid4()
     player_token = message.get("playerToken") or uuid.uuid4()
@@ -174,7 +174,7 @@ def gamerecv_start_game(message):
         })
         message.reply_channel.send({'text': response})
         return
-    
+
     delayed_message = {
         'channel': 'game.end',
         'content': {'gameId': str(game_id)},
@@ -260,9 +260,9 @@ def gamerecv_change_name(message):
     player_id = message['playerId']
     player_token = message['playerToken']
     name = message['name']
-    
+
     try:
-        game_service.update_player_name(game_id, player_id, name, player_token)
+        new_info = game_service.update_player_name(game_id, player_id, name, player_token)
     except UnauthorizedAction:
         # TODO - Notify of failure.
         return
@@ -271,7 +271,7 @@ def gamerecv_change_name(message):
         'type': 'PlayerInfoUpdate',
         'gameId': game_id,
         'playerId': player_id,
-        'info': {'name': name},
+        'info': new_info,
         'accept': True
     }
     Group(group_name).send({'text': json_encoder.encode(response)})
@@ -308,9 +308,9 @@ def send_reveal_words(game_id):
 
 dispatch = {
     "create_game": gamerecv_newgame,
-   	"join_game": gamerecv_joingame,
-   	"reinit_game": gamerecv_reinitgame,
-   	"submit_word": gamerecv_submit_word,
-   	"start_game": gamerecv_start_game,
-   	"change_name": gamerecv_change_name,
+    "join_game": gamerecv_joingame,
+    "reinit_game": gamerecv_reinitgame,
+    "submit_word": gamerecv_submit_word,
+    "start_game": gamerecv_start_game,
+    "change_name": gamerecv_change_name,
 }

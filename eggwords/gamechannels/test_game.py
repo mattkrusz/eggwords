@@ -193,6 +193,48 @@ def test_player_info(game_id):
     game_service.update_player_name(game_id, p1_id, 'TestName', p1_token)
     gstate = game_service.get_game_state(game_id)
     assert 'TestName' == gstate.player_info[p1_id]['name']
+    assert 'color' in gstate.player_info[p1_id]
+
+def test_full_game(game_id):
+    game_service.init_game(game_id, uuid.uuid4(), uuid.uuid4())
+    for _ in range(gameservice.MAX_PLAYERS - 1):
+        game_service.add_player(game_id, uuid.uuid4(), uuid.uuid4())
+    with pytest.raises(GameFull):
+        game_service.add_player(game_id, uuid.uuid4(), uuid.uuid4())
+        game_service.add_player(game_id, uuid.uuid4(), uuid.uuid4())
+
+
+def test_player_colors(game_id):
+    p1_id = uuid.uuid4()
+    p1_token = uuid.uuid4()
+
+    game_service.init_game(game_id, p1_id, p1_token)
+    game_service.update_player_name(game_id, p1_id, 'TestName', p1_token)
+
+    p2_id, p2_token = uuid.uuid4(), uuid.uuid4()
+    p3_id, p3_token = uuid.uuid4(), uuid.uuid4()
+    p4_id, p4_token = uuid.uuid4(), uuid.uuid4()
+    p5_id, p5_token = uuid.uuid4(), uuid.uuid4()
+
+    game_service.add_player(game_id, p2_id, p2_token)
+    game_service.add_player(game_id, p3_id, p3_token)
+    game_service.add_player(game_id, p4_id, p4_token)
+    game_service.add_player(game_id, p5_id, p5_token)
+
+    gstate = game_service.get_game_state(game_id)
+
+    # Assert all colors are unique
+    used_colors = [pi['color'] for pi in gstate.player_info.values()]
+    assert len(set(used_colors)) == len(used_colors)
+
+    # Remove / Add player, then test again
+    game_service.remove_player(game_id, p3_id)
+    new_id, new_token = uuid.uuid4(), uuid.uuid4()
+    game_service.add_player(game_id, new_id, new_token)
+
+    gstate = game_service.get_game_state(game_id)
+    used_colors = [pi['color'] for pi in gstate.player_info.values()]
+    assert len(set(used_colors)) == len(used_colors)
 
 
 def test_player_info_unauthorized(game_id):

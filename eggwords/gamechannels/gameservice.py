@@ -1,4 +1,3 @@
-
 import dateutil.parser
 from datetime import datetime, timedelta
 import json, uuid, random, collections
@@ -15,6 +14,8 @@ from gamechannels.gameexceptions import *
 r = redis_connection()
 
 MAX_PLAYERS = 5
+DEFAULT_PLAYER_COLORS = ['#2bc253', '#2ecc71', '#3498db', '#9b59b6', '#e74c3c']
+
 
 class RedisGameService:
     '''
@@ -39,7 +40,8 @@ class RedisGameService:
             raise GameAlreadyExists(f"Unable to create new game with id [{game_id}] because one already exists.")
 
         pipe = self.redis.pipeline()
-        player_info_map = {host_id: '{}'}
+        color_str = DEFAULT_PLAYER_COLORS[0]
+        player_info_map = {host_id: '{"color": "' + color_str + '"}'}
         pipe.hmset(keys.game_players_key(), player_info_map)
         pipe.hset(keys.player_tokens_key(), host_id, host_token)
         pipe.set(keys.game_created_key(), timezone.now().utcnow())
@@ -74,9 +76,15 @@ class RedisGameService:
             raise GameDoesNotExist(f'Unable to join game with id {game_id} because the game was not found.')
 
         # TODO - Check if the player is already here. If so, must have token.
-        
+
         keys = RedisGameKeyIndex(game_id)
-        n_players = self.redis.hlen(keys.game_players_key())
+
+        player_info_response = self.redis.hgetall(keys.game_players_key())
+        player_info = {
+            pid: json.loads(info_json)
+            for (pid, info_json) in player_info_response.items()
+        }
+        n_players = len(player_info)
         if n_players >= MAX_PLAYERS:
             raise GameFull("The game could not be joined because it is full.")
 
@@ -86,10 +94,12 @@ class RedisGameService:
         if name is None:
             name = "Player " + str(player_id)[-4:]
 
-        player_info = {
-            'name': name
-        }
-       
+        colors = DEFAULT_PLAYER_COLORS
+        used_colors = [p['color'] for p in player_info.values()]
+        unused_colors = [c for c in colors if c not in used_colors]
+
+        player_info = {'name': name, 'color': unused_colors[-1]}
+
         pipe = self.redis.pipeline()
         pipe.hset(keys.game_players_key(), player_id, json.dumps(player_info))
         pipe.hset(keys.player_tokens_key(),player_id, player_token)
@@ -145,7 +155,7 @@ class RedisGameService:
         for (w_length, w_count) in word_count_dic.items():
             word_count_arr[w_length] = w_count
 
-        # Save the started game state to redis.    
+        # Save the started game state to redis.
         pipe = self.redis.pipeline()
         keys = RedisGameKeyIndex(game_id)
         pipe.set(keys.game_letters_key(), letters)
@@ -189,7 +199,7 @@ class RedisGameService:
         pipe.get(keys.game_start_key())
         pipe.get(keys.game_end_key())
         pipe.get(keys.game_created_key())
-        pipe.get(keys.game_letters_key())       
+        pipe.get(keys.game_letters_key())
         pipe.lrange(keys.game_wc_key(), 0, -1)
         pipe.get(keys.expire_time_key())
         res = pipe.execute()
@@ -222,11 +232,11 @@ class RedisGameService:
         start = res[0]
         end = res[1]
         return derive_game_status(start, end)
-    
+
     def _init_try_word_script(self):
         '''
         Initializes the redis server-side script that atomically checks-and-claims a word.
-        '''  
+        '''
 
         lua_script = '''
             local stime = redis.call('GET', KEYS[3])
@@ -295,7 +305,7 @@ class RedisGameService:
 
         game_state = self.get_game_state(game_id)
         if not game_state.exists():
-            raise GameDoesNotExist(f'Unable to update player info in game with id {game_id} because no game with that id exists.')           
+            raise GameDoesNotExist(f'Unable to update player info in game with id {game_id} because no game with that id exists.')
 
         keys = RedisGameKeyIndex(game_id)
 
@@ -305,12 +315,13 @@ class RedisGameService:
 
         player_info = json.loads(r.hget(keys.game_players_key(), player_id))
         player_info['name'] = new_name
+
         self.redis.hset(keys.game_players_key(), player_id, json.dumps(player_info))
         return player_info
 
 
 class RedisGameKeyIndex:
-    
+
     keys = {
         'game_key': '{game_key}',
         'game_letters_key': '{game_key}:letters',
@@ -327,7 +338,7 @@ class RedisGameKeyIndex:
         'player_tokens_key': '{game_key}:tokens',
         'expire_time_key': '{game_key}:expire_time',
     }
-    
+
     def __init__(self, game_id):
         self.game_id = game_id
         self._game_key = 'games::game-' + str(self.game_id)
@@ -383,5 +394,3 @@ class RedisGameKeyIndex:
     def __iter__(self):
         for key_name in self.keys.keys():
             yield self.__key__(key_name)
-            
-
