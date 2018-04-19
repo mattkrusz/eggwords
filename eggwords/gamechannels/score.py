@@ -1,7 +1,7 @@
 import uuid
 from typing import Mapping
 
-SCORE_BY_LEN = [0, 0, 0, 250, 500, 750, 1000, 3000]
+SCORE_BY_LEN = [0, 0, 0, 250, 500, 750, 1000, 4500]
 
 def score_game(game_state) -> Mapping[uuid.UUID, int]:
     score = dict(((pid, 0) for pid in game_state.player_ids))
