@@ -226,6 +226,10 @@ a {
   box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.3);
 }
 
+.score-meter.myPlayer {
+  border: 1px solid gold;
+}
+
 .score-meter .score-meter-fill {
   display: block;
   height: 100%;
@@ -252,6 +256,7 @@ a {
 
 .myPlayer .score-label{
   color:#fff665;
+  font-weight: bold;
 }
 
 .myPlayer input.score-label {

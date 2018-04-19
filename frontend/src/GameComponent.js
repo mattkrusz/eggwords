@@ -15,27 +15,61 @@ const LockedWord = ({len}) => {
   </div>
 }
 
-const GameWordList = ({ wordCount, myWords, oppWords, revealedWords, gameStatus }) => {
-
+const GameWordList = ({ wordCount, myPlayerId, playerInfo, usedWords, revealedWords, gameStatus }) => {
  let allWords = [];
+
+ let myWords = usedWords[myPlayerId] || [];
+
+ let playerColors = {};
+  playerInfo.forEach((pi) => {
+    playerColors[pi.playerId] = pi.color;
+  });
 
  wordCount.forEach((wordCount, wordLen) => {
   let maxToShow = 8;
+  
+  // Now usedWords is a map of playerId -> wordList
 
-  let u = oppWords.filter((w) => w.length == wordLen);
   let m = myWords.filter((w) => w.length == wordLen);
-  let unlockedNum = u.length + m.length;
-  let lockedNum = wordCount - unlockedNum;
-  let opponentUnlocked = u.length;
 
   let myWordDom = m.map((w) => <div key={w} className="game-word unlocked">
-    { w.split('').map((l) => <div className="letter">{l}</div>) }
-  </div>)
+    { w.split('').map((l) => (
+      <div className="letter"
+           style={{
+             color: (playerColors[myPlayerId] || 'gray')
+           }}>{l}</div>
+      )) 
+    }
+  </div>);
   allWords.push(myWordDom);
 
-   let oppWordDom = u.map((w) => <div key={w} className= "game-word locked used">
-    { w.split('').map((l) => <div className="letter">{l}</div>) }
-  </div> );
+  let oppWordDom = [];
+  let oppWordsUsed = [];
+
+  Object.entries(usedWords)
+    .filter(([playerId, wordList]) => playerId !== myPlayerId)
+    .forEach(([playerId, wordList]) => {
+    wordList.filter((w) => w.length == wordLen)
+            .forEach((w) => {
+              console.log("!!!!");
+              console.log(w);
+              oppWordsUsed.push(w);
+              oppWordDom.push(
+                <div key={w} 
+                    className="game-word locked used"                     
+                >
+                  {w.split('').map((l) => <div className="letter" style={{
+                    color: (playerColors[playerId] || 'gray')
+                  }}>{l}</div>)}
+                </div>
+              );
+            });
+  }); 
+
+  let unlockedNum = oppWordDom.length + m.length;
+  let lockedNum = wordCount - unlockedNum;
+  let opponentUnlocked = oppWordDom.length;
+
   allWords.push(oppWordDom);
 
   let roomLeft = Math.max(maxToShow - unlockedNum, 1);
@@ -50,7 +84,7 @@ const GameWordList = ({ wordCount, myWords, oppWords, revealedWords, gameStatus 
   } else if (gameStatus === "COMPLETED" && revealedWords != null) {
     let revealedNumToShow = Math.min(roomLeft, lockedNum);
     let revealedWordDom = revealedWords
-      .filter((w) => w.length == wordLen && !u.includes(w) && !m.includes(w))
+      .filter((w) => w.length == wordLen && !oppWordsUsed.includes(w) && !m.includes(w))
       .slice(0, revealedNumToShow)
       .map((w) => <div className="game-word"> 
         { w.split('').map((l) => <div className="letter">{l}</div>) }
@@ -103,10 +137,19 @@ class RieWrapper extends React.Component {
 
 
 const GameScoreList = ({playerList, myPlayerId, maxScore, onNameChange}) => {
+
+  let sortedPlayerList = [ ...playerList];
+  sortedPlayerList.sort((a,b) => (a.score || 0) - (b.score || 0));
   
-  let scoreList = playerList.map(({ playerId, name, score }) => <div className="score" key={playerId + "-score"}>
+  let scoreList = playerList.map(({ playerId, name, score, color }) => <div className="score" key={playerId + "-score"}>
     <div className={"score-meter " + (myPlayerId === playerId ? "myPlayer" : "")}>
-      <span className="score-meter-fill" style={{ width: Math.min(100, parseInt((score / maxScore) * 100)) + '%'}}></span>
+      <span className="score-meter-fill" 
+            style={{ 
+              width: Math.min(100, parseInt((score / maxScore) * 100)) + '%',
+              backgroundColor: color
+            }}
+      >
+      </span>
       {myPlayerId === playerId ? 
         <RieWrapper key={playerId + '-score-input'}
           value={trim(name || playerId)}
@@ -169,7 +212,7 @@ class Game extends Component {
   }
 
   render() {
-    let { letters, typed, myWords, oppWords, wordCount,
+    let { letters, typed, myWords, usedWords, wordCount,
       endTimestamp, expireTimestamp, players, myPlayerId, myPlayerToken, gameId,
       gameStatus, onStartClick, onRestartClick, onNameChange, maxScore, revealedWords,
       notifyAccept, notifyReject, lastAccepted, lastRejected, joinGameError } = this.props;
@@ -198,7 +241,15 @@ class Game extends Component {
           onNameChange={(newName) => onNameChange(gameId, myPlayerId, myPlayerToken, newName)} />
         {joinGameError != null ? <div className="errorMessage">{joinGameError} Click <a href="/">here</a> to start a new game.</div> : "" }
         {middleComponent}
-        <GameWordList wordCount={wordCount} myWords={myWords} oppWords={oppWords} revealedWords={revealedWords} gameStatus={gameStatus} />
+        <GameWordList 
+          myPlayerId={myPlayerId} 
+          playerInfo={players} 
+          wordCount={wordCount} 
+          myWords={myWords} 
+          usedWords={usedWords} 
+          revealedWords={revealedWords} 
+          gameStatus={gameStatus} 
+        />
         <GameInstructions />
       </div>
     )
@@ -211,7 +262,7 @@ Game.defaultProps = {
   letters: '',
   typed: '',
   myWords: [],
-  oppWords: [],
+  usedWords: [],
   wordCount: [],
   players: [],
   myPlayerId: null,

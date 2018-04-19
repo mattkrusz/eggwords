@@ -13,12 +13,7 @@ let storage = window.localStorage;
 function createContainerComponent(actionFactory) {
     const mapStateToProps = state => {
         let myPlayerId = state.player.playerId;
-
-        let oppWords = Object.entries(state.game.usedWords)
-            .filter(([playerId, words]) => playerId !== myPlayerId)
-            .map(([playerIds, words]) => words)
-            .reduce((acc, cur) => acc.concat(cur), []);
-
+        let usedWords = state.game.usedWords;
         let inputRPadding = state.game.letters ? state.game.letters.length : 7;
         let typed = state.player.typed.padEnd(inputRPadding, ' ');
 
@@ -34,7 +29,7 @@ function createContainerComponent(actionFactory) {
             letters: state.player.localLetters || '',
             typed: typed,
             myWords: state.requests.acceptedWords.map((aw) => aw.word),
-            oppWords: oppWords,
+            usedWords: usedWords,
             wordCount: state.game.wordCount || [],
             endTimestamp: state.game.endTimestamp,
             expireTimestamp: state.game.expireTimestamp,
